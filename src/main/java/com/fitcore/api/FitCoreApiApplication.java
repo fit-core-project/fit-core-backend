@@ -1,1 +1,11 @@
-package com.fitcore.api;import org.springframework.boot.SpringApplication;import org.springframework.boot.autoconfigure.SpringBootApplication;@SpringBootApplicationpublic class FitCoreApiApplication {    public static void main(String[] args) {        SpringApplication.run(FitCoreApiApplication.class, args);    }}
+package com.fitcore.api;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class FitCoreApiApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(FitCoreApiApplication.class, args);
+    }
+}
