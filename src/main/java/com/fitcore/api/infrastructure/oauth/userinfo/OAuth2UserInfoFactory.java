@@ -8,6 +8,8 @@ public class OAuth2UserInfoFactory {
             return new GoogleUserInfo(attributes);
         } else if (provider.equalsIgnoreCase("kakao")) {
             return new KakaoUserInfo(attributes);
+        } else if (provider.equalsIgnoreCase("naver")) {
+            return new NaverUserInfo(attributes);
         } else {
             throw new IllegalArgumentException("지원하지 않는 소셜 로그인입니다: " + provider);
         }
