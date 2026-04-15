@@ -45,7 +45,7 @@ public class TokenProvider {
     }
 
     // 2. 인증 정보를 기반으로 토큰 생성
-    public String createToken(Authentication authentication) {
+    public String createToken(Authentication authentication, String profileImageUrl) {
         String authorities = authentication.getAuthorities().stream()
             .map(GrantedAuthority::getAuthority)
             .collect(Collectors.joining(","));
@@ -56,6 +56,7 @@ public class TokenProvider {
         return Jwts.builder()
             .setSubject(authentication.getName()) // 보통 email이 들어감
             .claim("auth", authorities)          // 권한 정보 (ROLE_USER 등)
+            .claim("profileImage", profileImageUrl)
             .signWith(key, SignatureAlgorithm.HS512)
             .setExpiration(validity)
             .compact();

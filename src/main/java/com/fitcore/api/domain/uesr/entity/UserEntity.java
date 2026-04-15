@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -30,6 +31,7 @@ import com.fitcore.api.domain.uesr.enums.UserRole;
 import com.fitcore.api.domain.uesr.enums.UserStatus;
 import com.fitcore.api.global.common.entity.BaseEntity;
 
+@ToString
 @Entity
 @Table(name = "users")
 @Getter
