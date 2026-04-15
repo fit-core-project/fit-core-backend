@@ -43,7 +43,13 @@ public class SecurityConfig {
 
             // 경로별 권한 설정
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/auth/**", "/oauth2/**", "/login/**").permitAll()
+                .requestMatchers("/",
+                    "/auth/**",
+                    "/oauth2/**",
+                    "/login/**",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/swagger-ui.html").permitAll()
                 .anyRequest().authenticated()
             )
 
