@@ -43,6 +43,7 @@ public class SecurityConfig {
 
             // 경로별 권한 설정
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/v1/auth/set-link-mode").authenticated()
                 .requestMatchers("/",
                     "/auth/**",
                     "/oauth2/**",

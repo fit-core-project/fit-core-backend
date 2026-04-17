@@ -22,14 +22,12 @@ import com.fitcore.api.global.common.entity.BaseEntity;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // 안전한 객체 생성 제어
 public class SocialAccountEntity extends BaseEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 한 명의 유저는 여러 소셜 계정(구글, 카카오 등)을 가질 수 있음
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = false)
     private UserEntity user;
 
     @Column(nullable = false)

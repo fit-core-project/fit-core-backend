@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Collections;
+import java.util.Optional;
 
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -35,54 +36,81 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
-
         String provider = userRequest.getClientRegistration().getRegistrationId();
         OAuth2UserInfo userInfo = OAuth2UserInfoFactory.get(provider, oAuth2User.getAttributes());
-
         String email = userInfo.getEmail();
+        String providerId = userInfo.getProviderId(); // 이게 고유 ID입니다.
+
         if (email == null) {
             throw new OAuth2AuthenticationException("이메일 정보를 불러올 수 없습니다.");
         }
 
         String clientIp = NetworkUtil.getClientIp(request);
+        Long userId = (Long) request.getSession().getAttribute("link_user_id");
+        boolean isLinkMode = "link".equals(request.getSession().getAttribute("oauth_mode"));
 
-        // 1. 회원 정보 처리
-        UserEntity user = userRepository.findByEmail(email)
-            .map(existingUser -> {
-                existingUser.setUpdateIp(clientIp);
-                // 필요하다면 프로필 이미지나 이름 업데이트 로직 추가 가능
-                return existingUser;
-            })
-            .orElseGet(() -> {
-                UserEntity newUser = UserEntity.builder()
-                    .email(email)
-                    .name(userInfo.getName())
-                    .profileImageUrl(userInfo.getImageUrl()) // getImageUrl -> getProfileImageUrl 확인
-                    .status(UserStatus.ACTIVE)
-                    .roles(Collections.singleton(UserRole.ROLE_USER))
-                    .build();
-                newUser.setInsertIp(clientIp);
-                newUser.setUpdateIp(clientIp);
-                return userRepository.save(newUser);
-            });
+        UserEntity user;
 
-        // 2. 소셜 연동 정보 처리
-        socialAccountRepository.findByProviderAndProviderId(provider, userInfo.getProviderId())
-            .ifPresentOrElse(
-                social -> social.setUpdateIp(clientIp),
-                () -> {
-                    SocialAccountEntity newSocial = SocialAccountEntity.builder()
-                        .provider(provider)
-                        .providerId(userInfo.getProviderId())
-                        .user(user)
-                        .build();
-                    newSocial.setInsertIp(clientIp);
-                    newSocial.setUpdateIp(clientIp);
-                    socialAccountRepository.save(newSocial);
+        // 1. 소셜 계정 고유 ID로 이미 등록된 계정이 있는지 먼저 확인
+        Optional<SocialAccountEntity> socialAccountOpt = socialAccountRepository
+            .findByProviderAndProviderId(provider, providerId);
+
+        if (isLinkMode) {
+            // [연동 모드]
+            user = userRepository.findById(userId)
+                .orElseThrow(() -> new OAuth2AuthenticationException("유저를 찾을 수 없습니다."));
+
+            if (socialAccountOpt.isPresent()) {
+                if (!socialAccountOpt.get().getUser().getUserId().equals(userId)) {
+                    throw new OAuth2AuthenticationException("이미 다른 계정에 연동된 소셜입니다.");
                 }
-            );
+            } else {
+                // 연동 정보 저장
+                saveSocialAccount(user, provider, providerId, clientIp);
+            }
+        } else {
+            // [일반 로그인 모드]
+            if (socialAccountOpt.isPresent()) {
+                // 이미 소셜 계정이 존재 -> 기존 유저 가져오기
+                user = socialAccountOpt.get().getUser();
+                user.setUpdateIp(clientIp);
+            } else {
+                // 소셜 계정이 없음 -> 이메일로 기존 유저 확인
+                user = userRepository.findByEmail(email)
+                    .map(existingUser -> {
+                        existingUser.setUpdateIp(clientIp);
+                        return existingUser;
+                    })
+                    .orElseGet(() -> {
+                        // 완전히 신규 유저 생성
+                        UserEntity newUser = UserEntity.builder()
+                            .email(email)
+                            .name(userInfo.getName())
+                            .profileImageUrl(userInfo.getImageUrl())
+                            .status(UserStatus.ACTIVE)
+                            .roles(Collections.singleton(UserRole.ROLE_USER))
+                            .build();
+                        newUser.setInsertIp(clientIp);
+                        newUser.setUpdateIp(clientIp);
+                        return userRepository.save(newUser);
+                    });
 
-        // PrincipalDetails 생성 시 attributes는 원본(oAuth2User.getAttributes())을 넘겨주는 것이 관례입니다.
+                // 찾은 유저(또는 생성된 유저)와 소셜 계정 연결
+                saveSocialAccount(user, provider, providerId, clientIp);
+            }
+        }
+
         return new PrincipalDetails(user, oAuth2User.getAttributes());
+    }
+
+    private void saveSocialAccount(UserEntity user, String provider, String providerId, String ip) {
+        SocialAccountEntity newSocial = SocialAccountEntity.builder()
+            .provider(provider)
+            .providerId(providerId)
+            .user(user)
+            .build();
+        newSocial.setInsertIp(ip);
+        newSocial.setUpdateIp(ip);
+        socialAccountRepository.save(newSocial);
     }
 }

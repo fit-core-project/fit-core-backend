@@ -17,14 +17,12 @@ import org.springframework.web.filter.GenericFilterBean;
 
 @RequiredArgsConstructor
 public class JwtFilter extends GenericFilterBean {
-
     public static final String AUTHORIZATION_HEADER = "Authorization";
     private final TokenProvider tokenProvider;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
         throws IOException, ServletException {
-
         HttpServletRequest httpServletRequest = (HttpServletRequest) request;
         String jwt = resolveToken(httpServletRequest); // 헤더에서 토큰 추출
         String requestURI = httpServletRequest.getRequestURI();

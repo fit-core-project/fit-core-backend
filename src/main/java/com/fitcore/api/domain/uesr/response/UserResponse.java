@@ -7,6 +7,7 @@ import lombok.ToString;
 
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.fitcore.api.domain.uesr.entity.UserEntity;
@@ -28,9 +29,9 @@ public class UserResponse {
     private LocalDate birthDate;
     private UserStatus status;
     private Set<UserRole> roles = new HashSet<>();
+    private List<String> linkedProviders;
 
-    public UserResponse(UserEntity entity) {
-        this.userId = entity.getUserId();
+    public UserResponse(UserEntity entity, List<String> linkedProviders) {
         this.email = entity.getEmail();
         this.name = entity.getName();
         this.nickname = entity.getNickname();
@@ -38,6 +39,7 @@ public class UserResponse {
         this.gender = entity.getGender();
         this.birthDate = entity.getBirthDate();
         this.status = entity.getStatus();
-        this.roles = entity.getRoles(); // Set 타입 그대로 전달
+        this.roles = entity.getRoles();
+        this.linkedProviders = linkedProviders;
     }
 }

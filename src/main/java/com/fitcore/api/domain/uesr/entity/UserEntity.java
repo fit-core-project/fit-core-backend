@@ -81,6 +81,12 @@ public class UserEntity extends BaseEntity {
         this.roles = (roles != null) ? roles : new HashSet<>(Collections.singleton(UserRole.ROLE_USER));
     }
 
+    public void updateProfile(String nickname, Gender gender, LocalDate birthDate) {
+        this.nickname = nickname;
+        this.gender = gender;
+        this.birthDate = birthDate;
+    }
+
     /**
      * 탈퇴 처리
      */
