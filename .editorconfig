@@ -1,0 +1,16 @@
+# top-most EditorConfig file
+root = true
+
+[*]
+# 줄바꿈 방식은 LF로 통일 (요즘 표준)
+end_of_line = lf
+# 탭 대신 공백 사용
+indent_style = space
+indent_size = 4
+# 파일 마지막에 줄바꿈 추가
+insert_final_newline = true
+# 줄 끝의 공백 제거
+trim_trailing_whitespace = true
+
+[*.{java,xml,properties}]
+indent_size = 4
