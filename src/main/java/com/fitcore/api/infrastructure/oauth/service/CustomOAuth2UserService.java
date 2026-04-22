@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Collections;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fitcore.api.domain.uesr.entity.SocialAccountEntity;
-import com.fitcore.api.domain.uesr.entity.UserEntity;
+import com.fitcore.api.domain.uesr.entity.UserProfileEntity;
 import com.fitcore.api.domain.uesr.enums.UserRole;
 import com.fitcore.api.domain.uesr.enums.UserStatus;
 import com.fitcore.api.domain.uesr.repository.SocialAccountRepository;
@@ -46,10 +47,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         String clientIp = NetworkUtil.getClientIp(request);
-        Long userId = (Long) request.getSession().getAttribute("link_user_id");
+        UUID userId = (UUID) request.getSession().getAttribute("link_user_id");
         boolean isLinkMode = "link".equals(request.getSession().getAttribute("oauth_mode"));
 
-        UserEntity user;
+        UserProfileEntity user;
 
         // 1. 소셜 계정 고유 ID로 이미 등록된 계정이 있는지 먼저 확인
         Optional<SocialAccountEntity> socialAccountOpt = socialAccountRepository
@@ -73,25 +74,25 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             if (socialAccountOpt.isPresent()) {
                 // 이미 소셜 계정이 존재 -> 기존 유저 가져오기
                 user = socialAccountOpt.get().getUser();
-                user.setUpdateIp(clientIp);
+                user.setUpdatedIp(clientIp);
             } else {
                 // 소셜 계정이 없음 -> 이메일로 기존 유저 확인
                 user = userRepository.findByEmail(email)
                     .map(existingUser -> {
-                        existingUser.setUpdateIp(clientIp);
+                        existingUser.setUpdatedIp(clientIp);
                         return existingUser;
                     })
                     .orElseGet(() -> {
                         // 완전히 신규 유저 생성
-                        UserEntity newUser = UserEntity.builder()
+                        UserProfileEntity newUser = UserProfileEntity.builder()
                             .email(email)
                             .name(userInfo.getName())
                             .profileImageUrl(userInfo.getImageUrl())
                             .status(UserStatus.ACTIVE)
                             .roles(Collections.singleton(UserRole.ROLE_USER))
                             .build();
-                        newUser.setInsertIp(clientIp);
-                        newUser.setUpdateIp(clientIp);
+                        newUser.setCreatedIp(clientIp);
+                        newUser.setUpdatedIp(clientIp);
                         return userRepository.save(newUser);
                     });
 
@@ -103,14 +104,14 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return new PrincipalDetails(user, oAuth2User.getAttributes());
     }
 
-    private void saveSocialAccount(UserEntity user, String provider, String providerId, String ip) {
+    private void saveSocialAccount(UserProfileEntity user, String provider, String providerId, String ip) {
         SocialAccountEntity newSocial = SocialAccountEntity.builder()
             .provider(provider)
             .providerId(providerId)
             .user(user)
             .build();
-        newSocial.setInsertIp(ip);
-        newSocial.setUpdateIp(ip);
+        newSocial.setCreatedIp(ip);
+        newSocial.setUpdatedIp(ip);
         socialAccountRepository.save(newSocial);
     }
 }
