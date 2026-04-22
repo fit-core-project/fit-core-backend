@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 import java.util.UUID;
 
 @Converter(autoApply = true) // 프로젝트 내 모든 UUID 필드에 자동 적용
-public class UUIDConverter implements AttributeConverter<UUID, byte[]> {
+public class UuidConverter implements AttributeConverter<UUID, byte[]> {
 
     @Override
     public byte[] convertToDatabaseColumn(UUID uuid) {

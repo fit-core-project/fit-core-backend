@@ -14,6 +14,7 @@ import com.fitcore.api.domain.uesr.repository.SocialAccountRepository;
 import com.fitcore.api.domain.uesr.repository.UserRepository;
 import com.fitcore.api.domain.uesr.request.UserProfileUpdateRequest;
 import com.fitcore.api.domain.uesr.response.UserProfileResponse;
+import com.fitcore.api.global.common.util.SecurityUtils;
 import com.fitcore.api.global.error.ErrorCode;
 import com.fitcore.api.global.error.exception.BusinessException;
 
@@ -22,11 +23,13 @@ import com.fitcore.api.global.error.exception.BusinessException;
 @Transactional
 @RequiredArgsConstructor
 public class UserService {
+    private final SecurityUtils securityUtils;
     private final UserRepository userRepository;
     private final SocialAccountRepository socialAccountRepository;
 
-    public UserProfileResponse getMyProfile(String email) {
-        UserProfileEntity user = userRepository.findByEmail(email)
+    public UserProfileResponse getMyProfile() {
+        String userId = securityUtils.getCurrentUserId();
+        UserProfileEntity user = userRepository.findById(userId)
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         List<String> linkedProviders = socialAccountRepository.findByUserUserId(user.getUserId())
@@ -37,13 +40,14 @@ public class UserService {
         return new UserProfileResponse(user, linkedProviders);
     }
 
-    public UserProfileResponse updateMyProfile(String email, UserProfileUpdateRequest request) {
+    public UserProfileResponse updateMyProfile(UserProfileUpdateRequest request) {
+        String email = securityUtils.getCurrentUserId();
         UserProfileEntity user = userRepository.findByEmail(email)
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         user.updateProfile(request);
 
-        return getMyProfile(email);
+        return getMyProfile();
     }
 
     public boolean checkNicknameDuplicate(String nickname) {
