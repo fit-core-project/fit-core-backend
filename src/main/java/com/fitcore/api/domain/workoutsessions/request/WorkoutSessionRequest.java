@@ -1,0 +1,27 @@
+package com.fitcore.api.domain.workoutsessions.request;
+
+import lombok.Data;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+
+@Data
+public class WorkoutSessionRequest {
+    private LocalDate workoutDate;
+    private String splitLabel;
+    private String sourceRoutineFinalId;
+    private Short timeAvailableMin;
+    private Short durationMin;
+    private String readinessLevel = "normal"; // 기본값
+
+    // JSON 필드 (프론트에서 Map 형태로 전송)
+    private Map<String, Object> currentPainAreas;
+    private Map<String, Object> doms;
+    private Map<String, Object> unavailableEquipment;
+
+    private String sessionNote;
+
+    // 세트 정보 리스트
+    private List<WorkoutSetRequest> sets;
+}

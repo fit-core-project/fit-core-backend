@@ -16,7 +16,9 @@ public enum ErrorCode {
     // 유저 관련 에러
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "해당 유저를 찾을 수 없습니다."),
     DUPLICATE_EMAIL(HttpStatus.BAD_REQUEST, "U002", "이미 존재하는 이메일입니다."),
-    UNAUTHORIZED_ACCESS(HttpStatus.UNAUTHORIZED, "U003", "접권 권한이 없습니다.");
+    UNAUTHORIZED_ACCESS(HttpStatus.UNAUTHORIZED, "U003", "접권 권한이 없습니다."),
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "U004", "접근이 거부되었습니다."),
+    NOT_FOUND(HttpStatus.NOT_FOUND, "U005", "해당 리소스를 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;

@@ -23,7 +23,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SoftDelete;
@@ -48,9 +47,8 @@ public class UserProfileEntity extends BaseDeleteEntity {
 
     @Id
     @UuidGenerator
-    @JdbcTypeCode(SqlTypes.BINARY)
-    @Column(name = "user_id", columnDefinition = "BINARY(16)")
-    private UUID userId;
+    @Column(name = "user_id", length = 36, columnDefinition = "CHAR(36)")
+    private String userId;
 
     @Column(nullable = false, unique = true)
     private String email;

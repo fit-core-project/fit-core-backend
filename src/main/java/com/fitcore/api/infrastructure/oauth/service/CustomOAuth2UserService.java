@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Collections;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -47,7 +46,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         String clientIp = NetworkUtil.getClientIp(request);
-        UUID userId = (UUID) request.getSession().getAttribute("link_user_id");
+        String userId = (String) request.getSession().getAttribute("link_user_id");
         boolean isLinkMode = "link".equals(request.getSession().getAttribute("oauth_mode"));
 
         UserProfileEntity user;

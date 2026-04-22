@@ -22,7 +22,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
+
+import com.fitcore.api.domain.uesr.entity.UserProfileEntity;
+import com.fitcore.api.domain.uesr.repository.UserRepository;
+import com.fitcore.api.global.auth.PrincipalDetails;
 
 @Component
 public class TokenProvider {
@@ -30,11 +35,14 @@ public class TokenProvider {
     private final long tokenValidityInMilliseconds;
     private Key key; // 변환된 Key 객체 저장
 
+    private final UserRepository userRepository;
+
     public TokenProvider(
         @Value("${jwt.secret}") String secret,
-        @Value("${jwt.token-validity-in-seconds}") long tokenValidityInSeconds) {
+        @Value("${jwt.token-validity-in-seconds}") long tokenValidityInSeconds, UserRepository userRepository) {
         this.secret = secret;
         this.tokenValidityInMilliseconds = tokenValidityInSeconds * 1000;
+        this.userRepository = userRepository;
     }
 
     // 1. 주입받은 secret 값을 Base64 Decode해서 Key 변수로 할당
@@ -70,13 +78,24 @@ public class TokenProvider {
             .parseClaimsJws(token)
             .getBody();
 
+        // 1) 토큰에서 이메일 추출
+        String email = claims.getSubject();
+
+        // 2) DB에서 UserProfileEntity 조회
+        UserProfileEntity user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
+
+        // 3) PrincipalDetails 객체 생성 (우리가 만든 객체)
+        PrincipalDetails principalDetails = new PrincipalDetails(user);
+
+        // 4) 기존 로직: 권한 정보 추출
         Collection<? extends GrantedAuthority> authorities =
             Arrays.stream(claims.get("auth").toString().split(","))
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
 
-        // 여기서 PrincipalDetails를 사용해 유저 객체를 담아 반환
-        return new UsernamePasswordAuthenticationToken(claims.getSubject(), token, authorities);
+        // 5) *** 중요: 첫 번째 인자로 String 대신 principalDetails 객체를 삽입!
+        return new UsernamePasswordAuthenticationToken(principalDetails, token, authorities);
     }
 
     // 4. 토큰의 유효성 검증

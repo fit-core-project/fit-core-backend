@@ -13,11 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import java.util.UUID;
-
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
-import org.hibernate.type.SqlTypes;
 
 import com.fitcore.api.global.common.entity.BaseTimeEntity;
 
@@ -28,13 +24,12 @@ import com.fitcore.api.global.common.entity.BaseTimeEntity;
 public class SocialAccountEntity extends BaseTimeEntity {
 
     @Id
-    @Column(name = "id", columnDefinition = "BINARY(16)")
-    @UuidGenerator // 자동 UUID 생성
-    @JdbcTypeCode(SqlTypes.BINARY)
-    private UUID id;
+    @Column(name = "id", length = 36, columnDefinition = "CHAR(36)")
+    @UuidGenerator
+    private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", columnDefinition = "BINARY(16)", nullable = false)
+    @JoinColumn(name = "user_id", columnDefinition = "BINARY(36)", nullable = false)
     private UserProfileEntity user;
 
     @Column(nullable = false)
