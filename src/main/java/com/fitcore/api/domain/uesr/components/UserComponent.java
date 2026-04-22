@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 
-import com.fitcore.api.domain.uesr.entity.UserEntity;
+import com.fitcore.api.domain.uesr.entity.UserProfileEntity;
 import com.fitcore.api.domain.uesr.repository.UserRepository;
 
 @Component
@@ -14,7 +14,7 @@ import com.fitcore.api.domain.uesr.repository.UserRepository;
 public class UserComponent {
     private final UserRepository userRepository;
 
-    public Optional<UserEntity> findByEmail(String email) {
+    public Optional<UserProfileEntity> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 }

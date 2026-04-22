@@ -9,11 +9,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fitcore.api.domain.uesr.entity.SocialAccountEntity;
-import com.fitcore.api.domain.uesr.entity.UserEntity;
+import com.fitcore.api.domain.uesr.entity.UserProfileEntity;
 import com.fitcore.api.domain.uesr.repository.SocialAccountRepository;
 import com.fitcore.api.domain.uesr.repository.UserRepository;
-import com.fitcore.api.domain.uesr.request.UserUpdateRequest;
-import com.fitcore.api.domain.uesr.response.UserResponse;
+import com.fitcore.api.domain.uesr.request.UserProfileUpdateRequest;
+import com.fitcore.api.domain.uesr.response.UserProfileResponse;
 import com.fitcore.api.global.error.ErrorCode;
 import com.fitcore.api.global.error.exception.BusinessException;
 
@@ -25,8 +25,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final SocialAccountRepository socialAccountRepository;
 
-    public UserResponse getMyProfile(String email) {
-        UserEntity user = userRepository.findByEmail(email)
+    public UserProfileResponse getMyProfile(String email) {
+        UserProfileEntity user = userRepository.findByEmail(email)
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         List<String> linkedProviders = socialAccountRepository.findByUserUserId(user.getUserId())
@@ -34,14 +34,14 @@ public class UserService {
             .map(SocialAccountEntity::getProvider)
             .toList();
 
-        return new UserResponse(user, linkedProviders);
+        return new UserProfileResponse(user, linkedProviders);
     }
 
-    public UserResponse updateMyProfile(String email, UserUpdateRequest request) {
-        UserEntity user = userRepository.findByEmail(email)
+    public UserProfileResponse updateMyProfile(String email, UserProfileUpdateRequest request) {
+        UserProfileEntity user = userRepository.findByEmail(email)
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        user.updateProfile(request.getNickname(), request.getGender(), request.getBirthDate());
+        user.updateProfile(request);
 
         return getMyProfile(email);
     }

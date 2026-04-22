@@ -11,21 +11,21 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
-import com.fitcore.api.domain.uesr.entity.UserEntity;
+import com.fitcore.api.domain.uesr.entity.UserProfileEntity;
 
 @Getter
 public class PrincipalDetails implements UserDetails, OAuth2User {
 
-    private final UserEntity user; // 우리가 만든 엔티티
+    private final UserProfileEntity user; // 우리가 만든 엔티티
     private Map<String, Object> attributes; // 소셜에서 받은 속성값
 
     // 일반 로그인용 생성자
-    public PrincipalDetails(UserEntity user) {
+    public PrincipalDetails(UserProfileEntity user) {
         this.user = user;
     }
 
     // 소셜 로그인용 생성자
-    public PrincipalDetails(UserEntity user, Map<String, Object> attributes) {
+    public PrincipalDetails(UserProfileEntity user, Map<String, Object> attributes) {
         this.user = user;
         this.attributes = attributes;
     }

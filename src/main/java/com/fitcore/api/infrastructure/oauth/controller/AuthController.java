@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fitcore.api.domain.uesr.components.UserComponent;
-import com.fitcore.api.domain.uesr.entity.UserEntity;
+import com.fitcore.api.domain.uesr.entity.UserProfileEntity;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,7 +21,7 @@ public class AuthController {
         // Principal이 String 타입(이메일)임을 알고 있으므로 바로 꺼냅니다.
         String email = (String) authentication.getPrincipal();
         // 이메일로 유저를 찾아 필요한 로직 수행
-        UserEntity user = userComponent.findByEmail(email)
+        UserProfileEntity user = userComponent.findByEmail(email)
             .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다."));
 
         // 이제 세션 저장 로직 진행
