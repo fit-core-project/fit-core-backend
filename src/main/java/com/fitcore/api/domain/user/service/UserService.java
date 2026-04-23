@@ -1,4 +1,4 @@
-package com.fitcore.api.domain.uesr.service;
+package com.fitcore.api.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,12 +8,12 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fitcore.api.domain.uesr.entity.SocialAccountEntity;
-import com.fitcore.api.domain.uesr.entity.UserProfileEntity;
-import com.fitcore.api.domain.uesr.repository.SocialAccountRepository;
-import com.fitcore.api.domain.uesr.repository.UserRepository;
-import com.fitcore.api.domain.uesr.request.UserProfileUpdateRequest;
-import com.fitcore.api.domain.uesr.response.UserProfileResponse;
+import com.fitcore.api.domain.user.entity.SocialAccountEntity;
+import com.fitcore.api.domain.user.entity.UserProfileEntity;
+import com.fitcore.api.domain.user.repository.SocialAccountRepository;
+import com.fitcore.api.domain.user.repository.UserRepository;
+import com.fitcore.api.domain.user.request.UserProfileUpdateRequest;
+import com.fitcore.api.domain.user.response.UserProfileResponse;
 import com.fitcore.api.global.common.util.SecurityUtils;
 import com.fitcore.api.global.error.ErrorCode;
 import com.fitcore.api.global.error.exception.BusinessException;
@@ -41,8 +41,8 @@ public class UserService {
     }
 
     public UserProfileResponse updateMyProfile(UserProfileUpdateRequest request) {
-        String email = securityUtils.getCurrentUserId();
-        UserProfileEntity user = userRepository.findByEmail(email)
+        String userId = securityUtils.getCurrentUserId();
+        UserProfileEntity user = userRepository.findById(userId)
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         user.updateProfile(request);

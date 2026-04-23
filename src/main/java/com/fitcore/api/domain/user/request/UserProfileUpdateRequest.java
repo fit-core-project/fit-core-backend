@@ -1,4 +1,4 @@
-package com.fitcore.api.domain.uesr.request;
+package com.fitcore.api.domain.user.request;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,10 +9,12 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-import com.fitcore.api.domain.uesr.enums.ExperienceLevel;
-import com.fitcore.api.domain.uesr.enums.Gender;
-import com.fitcore.api.domain.uesr.enums.GoalType;
-import com.fitcore.api.domain.uesr.enums.SplitType;
+import com.fitcore.api.domain.user.dto.PainAreas;
+import com.fitcore.api.domain.user.dto.StrengthBaseline;
+import com.fitcore.api.domain.user.enums.ExperienceLevel;
+import com.fitcore.api.domain.user.enums.Gender;
+import com.fitcore.api.domain.user.enums.GoalType;
+import com.fitcore.api.domain.user.enums.SplitType;
 
 @Getter
 @Setter
@@ -37,6 +39,6 @@ public class UserProfileUpdateRequest {
     private List<String> equipmentAccess;
     private List<String> unpreferredExerciseIds;
     private List<String> preferredExerciseIds;
-    private List<Map<String, Object>> painAreas;
-    private Map<String, Object> strengthBaseline;
+    private List<PainAreas> painAreas;
+    private Map<String, List<StrengthBaseline>> strengthBaseline;
 }

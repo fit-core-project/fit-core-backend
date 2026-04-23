@@ -26,6 +26,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
+import com.fitcore.api.domain.workoutsessions.dto.CurrentPainAreas;
+import com.fitcore.api.domain.workoutsessions.dto.Doms;
+
 @Entity
 @Table(name = "workout_sessions", indexes = {
     @Index(name = "idx_workout_sessions_user_date", columnList = "user_id, workout_date DESC"),
@@ -41,7 +44,7 @@ public class WorkoutSessionEntity {
     @Column(name = "workout_session_id", length = 36, columnDefinition = "CHAR(36)")
     private String id;
 
-    @Column(name = "user_id", nullable = false, length = 64)
+    @Column(name = "user_id", nullable = false, length = 36)
     private String userId;
 
     @Column(name = "workout_date", nullable = false)
@@ -66,11 +69,11 @@ public class WorkoutSessionEntity {
     // JSON 처리 (Map 혹은 커스텀 DTO 사용 가능)
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "current_pain_areas", columnDefinition = "json")
-    private Map<String, Object> currentPainAreas;
+    private List<CurrentPainAreas> currentPainAreas;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "doms", columnDefinition = "json")
-    private Map<String, Object> doms;
+    private List<Doms> doms;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "unavailable_equipment", columnDefinition = "json")

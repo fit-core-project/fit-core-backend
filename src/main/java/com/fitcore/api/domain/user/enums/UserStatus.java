@@ -1,4 +1,4 @@
-package com.fitcore.api.domain.uesr.enums;
+package com.fitcore.api.domain.user.enums;
 
 public enum UserStatus {
     ACTIVE, // 정상 활동

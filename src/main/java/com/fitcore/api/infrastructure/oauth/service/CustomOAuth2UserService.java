@@ -14,12 +14,12 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fitcore.api.domain.uesr.entity.SocialAccountEntity;
-import com.fitcore.api.domain.uesr.entity.UserProfileEntity;
-import com.fitcore.api.domain.uesr.enums.UserRole;
-import com.fitcore.api.domain.uesr.enums.UserStatus;
-import com.fitcore.api.domain.uesr.repository.SocialAccountRepository;
-import com.fitcore.api.domain.uesr.repository.UserRepository;
+import com.fitcore.api.domain.user.entity.SocialAccountEntity;
+import com.fitcore.api.domain.user.entity.UserProfileEntity;
+import com.fitcore.api.domain.user.enums.UserRole;
+import com.fitcore.api.domain.user.enums.UserStatus;
+import com.fitcore.api.domain.user.repository.SocialAccountRepository;
+import com.fitcore.api.domain.user.repository.UserRepository;
 import com.fitcore.api.global.auth.PrincipalDetails;
 import com.fitcore.api.global.common.util.NetworkUtil;
 import com.fitcore.api.infrastructure.oauth.userinfo.OAuth2UserInfo;

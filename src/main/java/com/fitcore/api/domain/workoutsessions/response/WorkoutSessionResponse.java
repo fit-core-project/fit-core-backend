@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.fitcore.api.domain.workoutsessions.dto.CurrentPainAreas;
+import com.fitcore.api.domain.workoutsessions.dto.Doms;
 import com.fitcore.api.domain.workoutsessions.entity.WorkoutSessionEntity;
 
 @Data
@@ -24,8 +26,8 @@ public class WorkoutSessionResponse {
     private String readinessLevel;
 
     // JSON 필드
-    private Map<String, Object> currentPainAreas;
-    private Map<String, Object> doms;
+    private List<CurrentPainAreas> currentPainAreas;
+    private List<Doms> doms;
     private Map<String, Object> unavailableEquipment;
 
     private String sessionNote;

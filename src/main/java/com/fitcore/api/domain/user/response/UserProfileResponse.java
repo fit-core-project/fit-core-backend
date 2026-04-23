@@ -1,4 +1,4 @@
-package com.fitcore.api.domain.uesr.response;
+package com.fitcore.api.domain.user.response;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,13 +12,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.fitcore.api.domain.uesr.entity.UserProfileEntity;
-import com.fitcore.api.domain.uesr.enums.ExperienceLevel;
-import com.fitcore.api.domain.uesr.enums.Gender;
-import com.fitcore.api.domain.uesr.enums.GoalType;
-import com.fitcore.api.domain.uesr.enums.SplitType;
-import com.fitcore.api.domain.uesr.enums.UserRole;
-import com.fitcore.api.domain.uesr.enums.UserStatus;
+import com.fitcore.api.domain.user.dto.PainAreas;
+import com.fitcore.api.domain.user.dto.StrengthBaseline;
+import com.fitcore.api.domain.user.entity.UserProfileEntity;
+import com.fitcore.api.domain.user.enums.ExperienceLevel;
+import com.fitcore.api.domain.user.enums.Gender;
+import com.fitcore.api.domain.user.enums.GoalType;
+import com.fitcore.api.domain.user.enums.SplitType;
+import com.fitcore.api.domain.user.enums.UserRole;
+import com.fitcore.api.domain.user.enums.UserStatus;
 
 @Getter
 @Setter
@@ -47,8 +49,8 @@ public class UserProfileResponse {
     private List<String> equipmentAccess;
     private List<String> unpreferredExerciseIds;
     private List<String> preferredExerciseIds;
-    private List<Map<String, Object>> painAreas;
-    private Map<String, Object> strengthBaseline;
+    private List<PainAreas> painAreas;
+    private Map<String, List<StrengthBaseline>> strengthBaseline;
     private Integer profileVersion;
 
     public UserProfileResponse(UserProfileEntity entity, List<String> linkedProviders) {

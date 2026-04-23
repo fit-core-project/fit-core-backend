@@ -7,8 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fitcore.api.domain.uesr.components.UserComponent;
-import com.fitcore.api.domain.uesr.entity.UserProfileEntity;
+import com.fitcore.api.domain.user.components.UserComponent;
+import com.fitcore.api.domain.user.entity.UserProfileEntity;
 
 @RestController
 @RequiredArgsConstructor

@@ -1,10 +1,10 @@
-package com.fitcore.api.domain.uesr.repository;
+package com.fitcore.api.domain.user.repository;
 
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.fitcore.api.domain.uesr.entity.UserProfileEntity;
+import com.fitcore.api.domain.user.entity.UserProfileEntity;
 
 public interface UserRepository extends JpaRepository<UserProfileEntity, String> {
     // 계정 통합의 기준이 되는 이메일 조회

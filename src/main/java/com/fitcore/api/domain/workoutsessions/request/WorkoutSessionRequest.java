@@ -6,6 +6,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+import com.fitcore.api.domain.workoutsessions.dto.CurrentPainAreas;
+import com.fitcore.api.domain.workoutsessions.dto.Doms;
+
 @Data
 public class WorkoutSessionRequest {
     private LocalDate workoutDate;
@@ -16,8 +19,8 @@ public class WorkoutSessionRequest {
     private String readinessLevel = "normal"; // 기본값
 
     // JSON 필드 (프론트에서 Map 형태로 전송)
-    private Map<String, Object> currentPainAreas;
-    private Map<String, Object> doms;
+    private List<CurrentPainAreas> currentPainAreas;
+    private List<Doms> doms;
     private Map<String, Object> unavailableEquipment;
 
     private String sessionNote;

@@ -1,4 +1,4 @@
-package com.fitcore.api.domain.uesr.controller;
+package com.fitcore.api.domain.user.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fitcore.api.domain.uesr.request.UserProfileUpdateRequest;
-import com.fitcore.api.domain.uesr.response.UserProfileResponse;
-import com.fitcore.api.domain.uesr.service.UserService;
+import com.fitcore.api.domain.user.request.UserProfileUpdateRequest;
+import com.fitcore.api.domain.user.response.UserProfileResponse;
+import com.fitcore.api.domain.user.service.UserService;
 
 @RequestMapping("/api/profile")
 @RestController
@@ -34,6 +34,7 @@ public class UserController {
     @PutMapping("/me")
     public ResponseEntity<UserProfileResponse> updateMyProfile(
         @RequestBody UserProfileUpdateRequest userProfileUpdateRequest) {
+        System.out.println("AAAAAAAAAAAAAAAAAAA");
         UserProfileResponse user = userService.updateMyProfile(userProfileUpdateRequest);
         return ResponseEntity.ok(user);
     }

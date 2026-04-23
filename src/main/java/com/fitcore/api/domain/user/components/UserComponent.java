@@ -1,4 +1,4 @@
-package com.fitcore.api.domain.uesr.components;
+package com.fitcore.api.domain.user.components;
 
 import lombok.RequiredArgsConstructor;
 
@@ -6,8 +6,8 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 
-import com.fitcore.api.domain.uesr.entity.UserProfileEntity;
-import com.fitcore.api.domain.uesr.repository.UserRepository;
+import com.fitcore.api.domain.user.entity.UserProfileEntity;
+import com.fitcore.api.domain.user.repository.UserRepository;
 import com.fitcore.api.global.common.util.SecurityUtils;
 
 @Component

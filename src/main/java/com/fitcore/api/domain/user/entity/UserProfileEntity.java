@@ -1,4 +1,4 @@
-package com.fitcore.api.domain.uesr.entity;
+package com.fitcore.api.domain.user.entity;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -29,13 +29,15 @@ import org.hibernate.annotations.SoftDelete;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
-import com.fitcore.api.domain.uesr.enums.ExperienceLevel;
-import com.fitcore.api.domain.uesr.enums.Gender;
-import com.fitcore.api.domain.uesr.enums.GoalType;
-import com.fitcore.api.domain.uesr.enums.SplitType;
-import com.fitcore.api.domain.uesr.enums.UserRole;
-import com.fitcore.api.domain.uesr.enums.UserStatus;
-import com.fitcore.api.domain.uesr.request.UserProfileUpdateRequest;
+import com.fitcore.api.domain.user.dto.PainAreas;
+import com.fitcore.api.domain.user.dto.StrengthBaseline;
+import com.fitcore.api.domain.user.enums.ExperienceLevel;
+import com.fitcore.api.domain.user.enums.Gender;
+import com.fitcore.api.domain.user.enums.GoalType;
+import com.fitcore.api.domain.user.enums.SplitType;
+import com.fitcore.api.domain.user.enums.UserRole;
+import com.fitcore.api.domain.user.enums.UserStatus;
+import com.fitcore.api.domain.user.request.UserProfileUpdateRequest;
 import com.fitcore.api.global.common.entity.BaseDeleteEntity;
 
 @Entity
@@ -115,10 +117,10 @@ public class UserProfileEntity extends BaseDeleteEntity {
     private List<String> preferredExerciseIds;
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "pain_areas", columnDefinition = "JSON")
-    private List<Map<String, Object>> painAreas;
+    private List<PainAreas> painAreas;
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "strength_baseline", columnDefinition = "JSON")
-    private Map<String, Object> strengthBaseline;
+    private Map<String, List<StrengthBaseline>> strengthBaseline;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))

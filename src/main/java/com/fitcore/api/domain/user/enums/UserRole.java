@@ -1,4 +1,4 @@
-package com.fitcore.api.domain.uesr.enums;
+package com.fitcore.api.domain.user.enums;
 
 public enum UserRole {
     ROLE_USER,    // 일반 사용자

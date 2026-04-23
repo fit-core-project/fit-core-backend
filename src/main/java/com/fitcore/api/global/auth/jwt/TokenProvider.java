@@ -25,8 +25,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
-import com.fitcore.api.domain.uesr.entity.UserProfileEntity;
-import com.fitcore.api.domain.uesr.repository.UserRepository;
+import com.fitcore.api.domain.user.entity.UserProfileEntity;
+import com.fitcore.api.domain.user.repository.UserRepository;
 import com.fitcore.api.global.auth.PrincipalDetails;
 
 @Component

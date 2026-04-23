@@ -11,7 +11,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
-import com.fitcore.api.domain.uesr.entity.UserProfileEntity;
+import com.fitcore.api.domain.user.entity.UserProfileEntity;
 
 @Getter
 public class PrincipalDetails implements UserDetails, OAuth2User {
