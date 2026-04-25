@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import java.util.Collections;
 import java.util.Optional;
 
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -16,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fitcore.api.domain.user.entity.SocialAccountEntity;
 import com.fitcore.api.domain.user.entity.UserProfileEntity;
-import com.fitcore.api.domain.user.enums.UserRole;
 import com.fitcore.api.domain.user.enums.UserStatus;
 import com.fitcore.api.domain.user.repository.SocialAccountRepository;
 import com.fitcore.api.domain.user.repository.UserRepository;
@@ -88,7 +86,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                             .name(userInfo.getName())
                             .profileImageUrl(userInfo.getImageUrl())
                             .status(UserStatus.ACTIVE)
-                            .roles(Collections.singleton(UserRole.ROLE_USER))
+//                            .roles(Collections.singleton(UserRole.ROLE_USER)) ROLO 사용 안함
                             .build();
                         newUser.setCreatedIp(clientIp);
                         newUser.setUpdatedIp(clientIp);

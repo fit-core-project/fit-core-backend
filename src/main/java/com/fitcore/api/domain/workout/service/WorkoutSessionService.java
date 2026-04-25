@@ -1,4 +1,4 @@
-package com.fitcore.api.domain.workoutsessions.service;
+package com.fitcore.api.domain.workout.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,11 +10,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fitcore.api.domain.workoutsessions.entity.WorkoutSessionEntity;
-import com.fitcore.api.domain.workoutsessions.entity.WorkoutSetEntity;
-import com.fitcore.api.domain.workoutsessions.repository.WorkoutSessionRepository;
-import com.fitcore.api.domain.workoutsessions.request.WorkoutSessionRequest;
-import com.fitcore.api.domain.workoutsessions.response.WorkoutSessionResponse;
+import com.fitcore.api.domain.workout.entity.WorkoutSessionEntity;
+import com.fitcore.api.domain.workout.entity.WorkoutSetEntity;
+import com.fitcore.api.domain.workout.repository.WorkoutSessionRepository;
+import com.fitcore.api.domain.workout.request.WorkoutSessionRequest;
+import com.fitcore.api.domain.workout.response.WorkoutSessionResponse;
 import com.fitcore.api.global.common.util.SecurityUtils;
 
 @Slf4j

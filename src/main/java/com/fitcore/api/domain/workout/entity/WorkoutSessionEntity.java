@@ -1,4 +1,4 @@
-package com.fitcore.api.domain.workoutsessions.entity;
+package com.fitcore.api.domain.workout.entity;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -26,8 +26,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
-import com.fitcore.api.domain.workoutsessions.dto.CurrentPainAreas;
-import com.fitcore.api.domain.workoutsessions.dto.Doms;
+import com.fitcore.api.domain.workout.dto.CurrentPainAreas;
+import com.fitcore.api.domain.workout.dto.Doms;
 
 @Entity
 @Table(name = "workout_sessions", indexes = {

@@ -1,4 +1,4 @@
-package com.fitcore.api.domain.workoutsessions.controller;
+package com.fitcore.api.domain.workout.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fitcore.api.domain.workoutsessions.request.WorkoutSessionRequest;
-import com.fitcore.api.domain.workoutsessions.response.WorkoutSessionResponse;
-import com.fitcore.api.domain.workoutsessions.service.WorkoutSessionService;
+import com.fitcore.api.domain.workout.request.WorkoutSessionRequest;
+import com.fitcore.api.domain.workout.response.WorkoutSessionResponse;
+import com.fitcore.api.domain.workout.service.WorkoutSessionService;
 
 @RestController
 @RequestMapping("/api/workouts")

@@ -1,4 +1,4 @@
-package com.fitcore.api.domain.workoutsessions.response;
+package com.fitcore.api.domain.workout.response;
 
 import lombok.Builder;
 import lombok.Data;
@@ -9,9 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.fitcore.api.domain.workoutsessions.dto.CurrentPainAreas;
-import com.fitcore.api.domain.workoutsessions.dto.Doms;
-import com.fitcore.api.domain.workoutsessions.entity.WorkoutSessionEntity;
+import com.fitcore.api.domain.workout.dto.CurrentPainAreas;
+import com.fitcore.api.domain.workout.dto.Doms;
+import com.fitcore.api.domain.workout.entity.WorkoutSessionEntity;
 
 @Data
 @Builder

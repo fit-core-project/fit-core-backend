@@ -1,4 +1,4 @@
-package com.fitcore.api.domain.workoutsessions.entity;
+package com.fitcore.api.domain.workout.entity;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

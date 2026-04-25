@@ -1,4 +1,4 @@
-package com.fitcore.api.domain.workoutsessions.dto;
+package com.fitcore.api.domain.workout.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

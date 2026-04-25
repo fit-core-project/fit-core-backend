@@ -1,4 +1,4 @@
-package com.fitcore.api.domain.workoutsessions.request;
+package com.fitcore.api.domain.workout.request;
 
 import lombok.Data;
 

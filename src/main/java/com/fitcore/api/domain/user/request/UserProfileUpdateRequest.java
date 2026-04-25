@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+import com.fitcore.api.domain.user.dto.BodyComposition;
 import com.fitcore.api.domain.user.dto.PainAreas;
 import com.fitcore.api.domain.user.dto.StrengthBaseline;
 import com.fitcore.api.domain.user.enums.ExperienceLevel;
@@ -41,4 +42,5 @@ public class UserProfileUpdateRequest {
     private List<String> preferredExerciseIds;
     private List<PainAreas> painAreas;
     private Map<String, List<StrengthBaseline>> strengthBaseline;
+    private List<BodyComposition> bodyCompositionSnapshot;
 }

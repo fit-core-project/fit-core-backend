@@ -1,4 +1,4 @@
-package com.fitcore.api.domain.workoutsessions.request;
+package com.fitcore.api.domain.workout.request;
 
 import lombok.Data;
 
@@ -6,8 +6,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-import com.fitcore.api.domain.workoutsessions.dto.CurrentPainAreas;
-import com.fitcore.api.domain.workoutsessions.dto.Doms;
+import com.fitcore.api.domain.workout.dto.CurrentPainAreas;
+import com.fitcore.api.domain.workout.dto.Doms;
 
 @Data
 public class WorkoutSessionRequest {

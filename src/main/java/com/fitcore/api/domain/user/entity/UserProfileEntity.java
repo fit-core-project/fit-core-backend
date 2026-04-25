@@ -5,21 +5,15 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +23,7 @@ import org.hibernate.annotations.SoftDelete;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
+import com.fitcore.api.domain.user.dto.BodyComposition;
 import com.fitcore.api.domain.user.dto.PainAreas;
 import com.fitcore.api.domain.user.dto.StrengthBaseline;
 import com.fitcore.api.domain.user.enums.ExperienceLevel;
@@ -121,12 +116,15 @@ public class UserProfileEntity extends BaseDeleteEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "strength_baseline", columnDefinition = "JSON")
     private Map<String, List<StrengthBaseline>> strengthBaseline;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "body_composition_snapshot", columnDefinition = "JSON")
+    private List<BodyComposition> bodyCompositionSnapshot;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
-    @Column(name = "role_name")
-    @Enumerated(EnumType.STRING) // Enum 문자열 저장을 위해 필수 추가
-    private Set<UserRole> roles = new HashSet<>();
+//    @ElementCollection(fetch = FetchType.EAGER)
+//    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+//    @Column(name = "role_name")
+//    @Enumerated(EnumType.STRING) // Enum 문자열 저장을 위해 필수 추가
+//    private Set<UserRole> roles = new HashSet<>();
 
     @Builder
     public UserProfileEntity(
@@ -139,7 +137,7 @@ public class UserProfileEntity extends BaseDeleteEntity {
         this.gender = gender;
         this.birthDate = birthDate;
         this.status = (status != null) ? status : UserStatus.ACTIVE;
-        this.roles = (roles != null) ? roles : new HashSet<>(Collections.singleton(UserRole.ROLE_USER));
+//        this.roles = (roles != null) ? roles : new HashSet<>(Collections.singleton(UserRole.ROLE_USER));
     }
 
     public void updateProfile(UserProfileUpdateRequest request) {
@@ -165,6 +163,7 @@ public class UserProfileEntity extends BaseDeleteEntity {
         this.preferredExerciseIds = request.getPreferredExerciseIds();
         this.painAreas = request.getPainAreas();
         this.strengthBaseline = request.getStrengthBaseline();
+        this.bodyCompositionSnapshot = request.getBodyCompositionSnapshot();
 
         // 필요 시 버전 업데이트 (선택 사항)
         this.profileVersion += 1;

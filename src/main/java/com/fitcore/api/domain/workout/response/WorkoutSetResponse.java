@@ -1,11 +1,11 @@
-package com.fitcore.api.domain.workoutsessions.response;
+package com.fitcore.api.domain.workout.response;
 
 import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
 
-import com.fitcore.api.domain.workoutsessions.entity.WorkoutSetEntity;
+import com.fitcore.api.domain.workout.entity.WorkoutSetEntity;
 
 @Data
 @Builder
