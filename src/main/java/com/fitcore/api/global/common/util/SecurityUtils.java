@@ -19,18 +19,10 @@ public class SecurityUtils {
 
         // 인증 객체에서 PrincipalDetails 추출
         Object principal = authentication.getPrincipal();
-
-
-        System.out.println(principal.getClass());
-        System.out.println(principal.toString());
-
         if (principal instanceof PrincipalDetails details) {
-            System.out.println(details.getUser().getUserId());
             return details.getUser().getUserId();
         }
-        System.out.println(
-            "AAAAAAAAAAAAAAAA"
-        );
+
         throw new IllegalStateException("인증 객체에서 유저 정보를 찾을 수 없습니다.");
     }
 }

@@ -3,32 +3,116 @@ package com.fitcore.api.domain.routine.service;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fitcore.api.domain.routine.entity.RoutineDraftEntity;
 import com.fitcore.api.domain.routine.entity.RoutineFinalEntity;
 import com.fitcore.api.domain.routine.repository.RoutineDraftRepository;
 import com.fitcore.api.domain.routine.repository.RoutineFinalRepository;
 import com.fitcore.api.domain.routine.request.RoutineDraftRequest;
 import com.fitcore.api.domain.routine.request.RoutineFinalRequest;
+import com.fitcore.api.domain.routine.request.RoutineGenerateRequest;
 import com.fitcore.api.domain.routine.response.RoutineDraftResponse;
 import com.fitcore.api.domain.routine.response.RoutineFinalResponse;
 import com.fitcore.api.global.common.util.SecurityUtils;
 import com.fitcore.api.global.error.ErrorCode;
 import com.fitcore.api.global.error.exception.BusinessException;
+import com.fitcore.api.infrastructure.ai.client.AiClient;
+import com.fitcore.api.infrastructure.ai.dto.AiRoutineRequest;
+import com.fitcore.api.infrastructure.ai.dto.AiRoutineResponse;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class RoutineService {
-    private final RoutineDraftRepository draftRepository;
-    private final RoutineFinalRepository finalRepository;
+    private final RoutineDraftRepository routineDraftRepository;
+    private final RoutineFinalRepository routineFinalRepository;
     private final SecurityUtils securityUtils;
+    private final ObjectMapper objectMapper;
+    private final AiClient aiClient;
+
+    @Transactional
+    public RoutineDraftResponse generateRoutine(RoutineGenerateRequest request) {
+        String draftId = UUID.randomUUID().toString();
+
+        // 1. 요청 데이터를 AI 서버 전용 DTO로 매핑
+        AiRoutineRequest aiRequest = mapToAiRequest(request);
+
+        try {
+            // 2. AI 서버 호출
+            AiRoutineResponse res = aiClient.generateRoutine(aiRequest);
+            System.out.println(res);
+            // 3. 성공 시 DB 저장 (Audit Trail)
+            RoutineDraftEntity successEntity = RoutineDraftEntity.builder()
+                .id(res.getRoutineDraftId())
+                .userId(securityUtils.getCurrentUserId())
+                .generationStatus(res.getGenerationStatus().name())
+                .statusReasonCode(res.getStatusReasonCode().name())
+                .targetSplitLabel(res.getSummaryTitle())
+                .isFallback(Boolean.TRUE.equals(res.getIsFallback()))
+                .requestPayloadSnapshot(objectMapper.convertValue(request, new TypeReference<>() {
+                }))
+                .responsePayloadSnapshot(objectMapper.convertValue(res, new TypeReference<>() {
+                }))
+                .rationaleSummary(res.getRationaleSummary())
+                .build();
+
+            return RoutineDraftResponse.fromEntity(routineDraftRepository.save(successEntity));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            RoutineDraftEntity failedEntity = RoutineDraftEntity.builder()
+                .id(draftId)
+                .userId(securityUtils.getCurrentUserId())
+                .generationStatus("FAILED")
+                .statusReasonCode("AI_SERVER_ERROR")
+                .requestPayloadSnapshot(objectMapper.convertValue(request, new TypeReference<>() {
+                }))
+                .rationaleSummary(Arrays.asList("Error"))
+                .build();
+
+            return RoutineDraftResponse.fromEntity(routineDraftRepository.save(failedEntity));
+        }
+    }
+
+    private AiRoutineRequest mapToAiRequest(RoutineGenerateRequest request) {
+        return AiRoutineRequest.builder()
+            .userId(securityUtils.getCurrentUserId())
+            .targetSplitLabel(request.getTargetSplitLabel())
+            .targetMuscles(request.getTargetMuscles())
+            .readinessLevel(request.getReadinessLevel())
+            .timeAvailableMin(request.getTimeAvailableMin())
+            .currentPainAreas(request.getCurrentPainAreas())
+            .doms(convertDomsToList(request.getDoms()))
+            .unavailableEquipment(request.getUnavailableEquipment()) // 예시: 전체 장비 리스트 등에서 제외하여 매핑
+            .goal(request.getGoal())
+            .userNote(request.getUserNote())
+            .build();
+    }
+
+    private List<AiRoutineRequest.DomEntryDto> convertDomsToList(List<RoutineGenerateRequest.DomsRequest> doms) {
+        if (doms == null || doms.isEmpty()) {
+            return Collections.emptyList(); // 빈 리스트 반환
+        }
+
+        return doms.stream()
+            .map(d -> AiRoutineRequest.DomEntryDto.builder()
+                .bodyPart(d.getBodyPart())          // bodyPart -> muscle 매핑
+                .level(d.getLevel())
+                .build())
+            .collect(Collectors.toList());
+    }
 
     // 1. 루틴 초안 저장 (Request -> Entity -> Response)
     @Transactional
@@ -49,7 +133,7 @@ public class RoutineService {
             .createdAt(LocalDateTime.now())
             .build();
 
-        RoutineDraftEntity savedDraft = draftRepository.save(draft);
+        RoutineDraftEntity savedDraft = routineDraftRepository.save(draft);
         return RoutineDraftResponse.fromEntity(savedDraft);
     }
 
@@ -60,7 +144,7 @@ public class RoutineService {
         String currentUserId = securityUtils.getCurrentUserId();
 
         // Draft 조회 및 권한 검증
-        RoutineDraftEntity draft = draftRepository.findById(request.getRoutineDraftId())
+        RoutineDraftEntity draft = routineDraftRepository.findById(request.getRoutineDraftId())
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
         if (!draft.getUserId().equals(currentUserId)) {
@@ -80,7 +164,7 @@ public class RoutineService {
             .savedAt(LocalDateTime.now())
             .build();
 
-        RoutineFinalEntity savedFinal = finalRepository.save(finalEntity);
+        RoutineFinalEntity savedFinal = routineFinalRepository.save(finalEntity);
         return RoutineFinalResponse.fromEntity(savedFinal);
     }
 
@@ -89,7 +173,7 @@ public class RoutineService {
         String userId = securityUtils.getCurrentUserId();
 
         // Entity 페이징 조회 후 Response DTO로 매핑하여 반환
-        return finalRepository.findByUserId(userId, pageable)
+        return routineFinalRepository.findByUserId(userId, pageable)
             .map(RoutineFinalResponse::fromEntity);
     }
 
@@ -97,7 +181,7 @@ public class RoutineService {
         String currentUserId = securityUtils.getCurrentUserId();
 
         // 1. 데이터 조회
-        RoutineFinalEntity finalEntity = finalRepository.findById(finalId)
+        RoutineFinalEntity finalEntity = routineFinalRepository.findById(finalId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
         // 2. 권한 체크 (본인의 루틴인지 확인)

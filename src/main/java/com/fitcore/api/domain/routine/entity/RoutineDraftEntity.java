@@ -8,16 +8,19 @@ import lombok.NoArgsConstructor;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.domain.Persistable;
 
 @Entity
 @Table(name = "routine_drafts", indexes = {
@@ -27,10 +30,10 @@ import org.hibernate.type.SqlTypes;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class RoutineDraftEntity {
+@EntityListeners(org.springframework.data.jpa.domain.support.AuditingEntityListener.class)
+public class RoutineDraftEntity implements Persistable<String> {
 
     @Id
-    @UuidGenerator
     @Column(name = "routine_draft_id", length = 36)
     private String id;
 
@@ -74,8 +77,20 @@ public class RoutineDraftEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "rationale_summary", nullable = false)
-    private Map<String, Object> rationaleSummary;
+    private List<String> rationaleSummary;
 
-    @Column(name = "created_at", nullable = false)
+    @CreatedDate // 2. 생성 시 자동 주입 어노테이션
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    // JPA에게 이 엔티티는 id가 있어도 항상 새로 생성된 것이라고 알려줌
+    @Override
+    public boolean isNew() {
+        return true;
+    }
 }

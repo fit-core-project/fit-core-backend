@@ -34,7 +34,6 @@ public class UserController {
     @PutMapping("/me")
     public ResponseEntity<UserProfileResponse> updateMyProfile(
         @RequestBody UserProfileUpdateRequest userProfileUpdateRequest) {
-        System.out.println("AAAAAAAAAAAAAAAAAAA");
         UserProfileResponse user = userService.updateMyProfile(userProfileUpdateRequest);
         return ResponseEntity.ok(user);
     }

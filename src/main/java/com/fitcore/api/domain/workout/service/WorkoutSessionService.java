@@ -39,10 +39,14 @@ public class WorkoutSessionService {
             .userId(userId)
             .workoutDate(request.getWorkoutDate())
             .splitLabel(request.getSplitLabel())
-            .sessionNote(request.getSessionNote())
+            .sourceRoutineFinalId(request.getSourceRoutineFinalId())
+            .timeAvailableMin(request.getTimeAvailableMin())
+            .durationMin(request.getDurationMin())
+            .readinessLevel(request.getReadinessLevel())
             .currentPainAreas(request.getCurrentPainAreas())
             .doms(request.getDoms())
             .unavailableEquipment(request.getUnavailableEquipment())
+            .sessionNote(request.getSessionNote())
             .build();
 
         // 2. 세트 엔티티 리스트 변환 및 연관관계 설정

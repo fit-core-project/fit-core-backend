@@ -9,6 +9,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PainAreas {
     private String area;
-    private String painLevel;
     private String note;
 }

@@ -18,7 +18,10 @@ public enum ErrorCode {
     DUPLICATE_EMAIL(HttpStatus.BAD_REQUEST, "U002", "이미 존재하는 이메일입니다."),
     UNAUTHORIZED_ACCESS(HttpStatus.UNAUTHORIZED, "U003", "접권 권한이 없습니다."),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "U004", "접근이 거부되었습니다."),
-    NOT_FOUND(HttpStatus.NOT_FOUND, "U005", "해당 리소스를 찾을 수 없습니다.");
+    NOT_FOUND(HttpStatus.NOT_FOUND, "U005", "해당 리소스를 찾을 수 없습니다."),
+
+    // AI 서버 에러
+    AI_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "A001", "AI 서버와의 통신 중 오류가 발생했습니다.");
 
     private final HttpStatus status;
     private final String code;

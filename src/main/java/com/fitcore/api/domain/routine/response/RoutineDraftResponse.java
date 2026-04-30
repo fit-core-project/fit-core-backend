@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 import com.fitcore.api.domain.routine.entity.RoutineDraftEntity;
@@ -25,7 +26,7 @@ public class RoutineDraftResponse {
     private Map<String, Object> responsePayloadSnapshot;
     private Map<String, Object> adapterRequestSnapshot;
     private Map<String, Object> adapterResponseSnapshot;
-    private Map<String, Object> rationaleSummary;
+    private List<String> rationaleSummary;
 
     private LocalDateTime createdAt;
 

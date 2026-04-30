@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fitcore.api.domain.routine.request.RoutineFinalRequest;
+import com.fitcore.api.domain.routine.request.RoutineGenerateRequest;
+import com.fitcore.api.domain.routine.response.RoutineDraftResponse;
 import com.fitcore.api.domain.routine.response.RoutineFinalResponse;
 import com.fitcore.api.domain.routine.service.RoutineService;
 
@@ -22,6 +26,14 @@ import com.fitcore.api.domain.routine.service.RoutineService;
 @Tag(name = "Routine API", description = "루틴 생성, 확정 및 조회 관련 API")
 public class RoutineController {
     private final RoutineService routineService;
+
+    @PostMapping("/generate")
+    public ResponseEntity<RoutineDraftResponse> generate(
+        @Valid @RequestBody RoutineGenerateRequest request) {
+
+        RoutineDraftResponse response = routineService.generateRoutine(request);
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/drafts/{routineDraftId}/finalize")
     @Operation(summary = "루틴 초안 확정", description = "작성된 루틴 초안(Draft)을 기반으로 최종 루틴(Final)을 생성합니다.")
