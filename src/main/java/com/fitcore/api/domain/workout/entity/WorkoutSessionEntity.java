@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -18,7 +19,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -26,8 +26,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
-import com.fitcore.api.domain.workout.dto.CurrentPainAreas;
-import com.fitcore.api.domain.workout.dto.Doms;
+import com.fitcore.api.domain.routine.dto.Doms;
 
 @Entity
 @Table(name = "workout_sessions", indexes = {
@@ -35,6 +34,7 @@ import com.fitcore.api.domain.workout.dto.Doms;
     @Index(name = "idx_workout_sessions_source_final", columnList = "source_routine_final_id")
 })
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
@@ -69,7 +69,7 @@ public class WorkoutSessionEntity {
     // JSON 처리 (Map 혹은 커스텀 DTO 사용 가능)
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "current_pain_areas", columnDefinition = "json")
-    private List<CurrentPainAreas> currentPainAreas;
+    private List<String> currentPainAreas;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "doms", columnDefinition = "json")
@@ -77,7 +77,7 @@ public class WorkoutSessionEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "unavailable_equipment", columnDefinition = "json")
-    private Map<String, Object> unavailableEquipment;
+    private List<String> unavailableEquipment;
 
     @Column(name = "session_note", columnDefinition = "TEXT")
     private String sessionNote;

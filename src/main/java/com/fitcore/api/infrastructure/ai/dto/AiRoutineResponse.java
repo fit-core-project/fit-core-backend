@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fitcore.api.domain.routine.dto.RoutineBlock;
 import com.fitcore.api.infrastructure.ai.enums.GenerationStatus;
 import com.fitcore.api.infrastructure.ai.enums.StatusReasonCode;
 
@@ -35,56 +36,8 @@ public class AiRoutineResponse {
 
     private List<String> rationaleSummary;
 
-    private List<RoutineBlockDto> routineBlocks;
+    private List<RoutineBlock> routineBlocks;
 
     @Builder.Default
     private List<String> warnings = Collections.emptyList();
-
-    // --- Inner DTOs ---
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    @ToString
-    public static class RoutineBlockDto {
-        private int order;
-        private String exerciseId;
-        private String exerciseName;
-        private String movementPattern;
-        private List<String> primaryMuscles;
-        private String equipmentType;
-        private int defaultRestSec;
-        private List<SetPrescriptionDto> prescription;
-        private String exerciseRationale;
-        private List<SubstitutionCandidateDto> substitutionCandidates;
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    @ToString
-    public static class SetPrescriptionDto {
-        private int setIndex;
-        private String setType; // default: "working"
-        private int targetReps;
-        private Double targetWeightKg; // Optional이므로 래퍼 클래스 사용
-        private Integer targetRir;     // default: 2
-        private int targetRestSec;
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    @ToString
-    public static class SubstitutionCandidateDto {
-        private String exerciseId;
-        private String exerciseName;
-        private String reason;
-    }
 }

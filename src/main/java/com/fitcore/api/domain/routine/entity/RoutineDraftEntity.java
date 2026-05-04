@@ -18,9 +18,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.domain.Persistable;
+
+import com.fitcore.api.domain.routine.request.RoutineGenerateRequest;
+import com.fitcore.api.infrastructure.ai.dto.AiRoutineResponse;
+import com.fitcore.api.infrastructure.ai.enums.GenerationStatus;
+import com.fitcore.api.infrastructure.ai.enums.StatusReasonCode;
 
 @Entity
 @Table(name = "routine_drafts", indexes = {
@@ -31,9 +36,10 @@ import org.springframework.data.domain.Persistable;
 @AllArgsConstructor
 @Builder
 @EntityListeners(org.springframework.data.jpa.domain.support.AuditingEntityListener.class)
-public class RoutineDraftEntity implements Persistable<String> {
+public class RoutineDraftEntity {
 
     @Id
+    @UuidGenerator
     @Column(name = "routine_draft_id", length = 36)
     private String id;
 
@@ -51,21 +57,21 @@ public class RoutineDraftEntity implements Persistable<String> {
     private String targetSplitLabel;
 
     @Column(name = "generation_status", nullable = false, length = 16)
-    private String generationStatus;
+    private GenerationStatus generationStatus;
 
     @Column(name = "status_reason_code", nullable = false, length = 32)
-    private String statusReasonCode;
+    private StatusReasonCode statusReasonCode;
 
     @Column(name = "is_fallback", nullable = false)
     private boolean isFallback;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "request_payload_snapshot", nullable = false)
-    private Map<String, Object> requestPayloadSnapshot;
+    private RoutineGenerateRequest requestPayloadSnapshot;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "response_payload_snapshot", nullable = false)
-    private Map<String, Object> responsePayloadSnapshot;
+    private AiRoutineResponse responsePayloadSnapshot;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "adapter_request_snapshot")
@@ -82,15 +88,4 @@ public class RoutineDraftEntity implements Persistable<String> {
     @CreatedDate // 2. 생성 시 자동 주입 어노테이션
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    @Override
-    public String getId() {
-        return id;
-    }
-
-    // JPA에게 이 엔티티는 id가 있어도 항상 새로 생성된 것이라고 알려줌
-    @Override
-    public boolean isNew() {
-        return true;
-    }
 }

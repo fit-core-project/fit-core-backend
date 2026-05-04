@@ -17,11 +17,13 @@ import jakarta.persistence.Table;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Map;
+import java.util.List;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
+
+import com.fitcore.api.domain.routine.dto.FinalRoutinePayload;
 
 @Entity
 @Table(name = "routine_finals", indexes = {
@@ -54,14 +56,14 @@ public class RoutineFinalEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "final_routine_payload", nullable = false)
-    private Map<String, Object> finalRoutinePayload;
+    private FinalRoutinePayload finalRoutinePayload;
 
     @Column(name = "accepted_without_edits")
     private Boolean acceptedWithoutEdits;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "user_edit_summary")
-    private Map<String, Object> userEditSummary;
+    private List<String> userEditSummary;
 
     @Column(name = "saved_at", nullable = false)
     private LocalDateTime savedAt;

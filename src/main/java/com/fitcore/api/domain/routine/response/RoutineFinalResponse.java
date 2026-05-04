@@ -5,8 +5,9 @@ import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Map;
+import java.util.List;
 
+import com.fitcore.api.domain.routine.dto.FinalRoutinePayload;
 import com.fitcore.api.domain.routine.entity.RoutineFinalEntity;
 
 @Data
@@ -19,10 +20,10 @@ public class RoutineFinalResponse {
     private String targetSplitLabel;
 
     // 확정된 루틴의 상세 데이터 (JSON)
-    private Map<String, Object> finalRoutinePayload;
+    private FinalRoutinePayload finalRoutinePayload;
 
     private Boolean acceptedWithoutEdits;
-    private Map<String, Object> userEditSummary;
+    private List<String> userEditSummary;
     private LocalDateTime savedAt;
 
     /**

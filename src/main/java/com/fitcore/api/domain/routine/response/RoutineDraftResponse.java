@@ -3,52 +3,38 @@ package com.fitcore.api.domain.routine.response;
 import lombok.Builder;
 import lombok.Data;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
+import com.fitcore.api.domain.routine.dto.RoutineBlock;
 import com.fitcore.api.domain.routine.entity.RoutineDraftEntity;
+import com.fitcore.api.infrastructure.ai.enums.GenerationStatus;
+import com.fitcore.api.infrastructure.ai.enums.StatusReasonCode;
 
 @Data
 @Builder
 public class RoutineDraftResponse {
-    private String id;
-    private String userId;
-    private int sourceProfileVersion;
-    private Map<String, Object> sourceWorkoutSessionIds;
-    private String targetSplitLabel;
-    private String generationStatus;
-    private String statusReasonCode;
+    private String routineDraftId;
+    private GenerationStatus generationStatus;
+    private StatusReasonCode statusReasonCode;
     private boolean isFallback;
-
-    // JSON 데이터들
-    private Map<String, Object> requestPayloadSnapshot;
-    private Map<String, Object> responsePayloadSnapshot;
-    private Map<String, Object> adapterRequestSnapshot;
-    private Map<String, Object> adapterResponseSnapshot;
+    private int totalEstimatedTime;
+    private String summaryTitle;
     private List<String> rationaleSummary;
+    private List<String> warnings;
+    private List<RoutineBlock> routineBlocks;
 
-    private LocalDateTime createdAt;
 
-    /**
-     * Entity를 Response DTO로 변환하는 정적 메서드
-     */
     public static RoutineDraftResponse fromEntity(RoutineDraftEntity entity) {
         return RoutineDraftResponse.builder()
-            .id(entity.getId())
-            .userId(entity.getUserId())
-            .sourceProfileVersion(entity.getSourceProfileVersion())
-            .sourceWorkoutSessionIds(entity.getSourceWorkoutSessionIds())
-            .targetSplitLabel(entity.getTargetSplitLabel())
+            .routineDraftId(entity.getId())
             .generationStatus(entity.getGenerationStatus())
             .statusReasonCode(entity.getStatusReasonCode())
             .isFallback(entity.isFallback())
-            .requestPayloadSnapshot(entity.getRequestPayloadSnapshot())
-            .responsePayloadSnapshot(entity.getResponsePayloadSnapshot())
-            .adapterRequestSnapshot(entity.getAdapterRequestSnapshot())
-            .adapterResponseSnapshot(entity.getAdapterResponseSnapshot())
+            .totalEstimatedTime(0) // 필드 왜 없음?
+            .summaryTitle(entity.getResponsePayloadSnapshot().getSummaryTitle())
             .rationaleSummary(entity.getRationaleSummary())
-            .createdAt(entity.getCreatedAt())
+            .warnings(entity.getResponsePayloadSnapshot().getWarnings())
+            .routineBlocks(entity.getResponsePayloadSnapshot().getRoutineBlocks())
             .build();
     }
 }

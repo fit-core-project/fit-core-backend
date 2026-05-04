@@ -1,10 +1,17 @@
 package com.fitcore.api.domain.workout.request;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 
-@Data
+
+@Getter
+@Setter
+@ToString
+@NoArgsConstructor
 public class WorkoutSetRequest {
     private Integer exerciseOrder;
     private String exerciseId;
@@ -16,7 +23,7 @@ public class WorkoutSetRequest {
     private Integer reps;
     private BigDecimal rpe;
     private BigDecimal rir;
-    private Boolean isFailure = false; // 기본값
+    private Boolean isFailure = false;
     private Integer restSec;
     private String setNote;
 }

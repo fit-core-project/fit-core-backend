@@ -6,11 +6,9 @@ import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.fitcore.api.domain.workout.dto.CurrentPainAreas;
-import com.fitcore.api.domain.workout.dto.Doms;
+import com.fitcore.api.domain.routine.dto.Doms;
 import com.fitcore.api.domain.workout.entity.WorkoutSessionEntity;
 
 @Data
@@ -26,9 +24,9 @@ public class WorkoutSessionResponse {
     private String readinessLevel;
 
     // JSON 필드
-    private List<CurrentPainAreas> currentPainAreas;
+    private List<String> currentPainAreas;
     private List<Doms> doms;
-    private Map<String, Object> unavailableEquipment;
+    private List<String> unavailableEquipment;
 
     private String sessionNote;
     private LocalDateTime createdAt;

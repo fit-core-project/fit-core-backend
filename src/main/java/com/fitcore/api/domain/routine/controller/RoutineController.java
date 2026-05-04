@@ -30,7 +30,6 @@ public class RoutineController {
     @PostMapping("/generate")
     public ResponseEntity<RoutineDraftResponse> generate(
         @Valid @RequestBody RoutineGenerateRequest request) {
-
         RoutineDraftResponse response = routineService.generateRoutine(request);
         return ResponseEntity.ok(response);
     }
@@ -38,9 +37,8 @@ public class RoutineController {
     @PostMapping("/drafts/{routineDraftId}/finalize")
     @Operation(summary = "루틴 초안 확정", description = "작성된 루틴 초안(Draft)을 기반으로 최종 루틴(Final)을 생성합니다.")
     public ResponseEntity<RoutineFinalResponse> finalizeRoutine(
-        @PathVariable String routineDraftId,
-        @RequestBody RoutineFinalRequest request) {
-        return ResponseEntity.ok(routineService.finalizeRoutine(routineDraftId, request));
+        @PathVariable String routineDraftId, @RequestBody RoutineFinalRequest routineFinalRequest) {
+        return ResponseEntity.ok(routineService.finalizeRoutine(routineDraftId, routineFinalRequest));
     }
 
     @Operation(summary = "확정 루틴 상세 조회", description = "특정 확정된 루틴(Final)의 상세 정보를 조회합니다.")

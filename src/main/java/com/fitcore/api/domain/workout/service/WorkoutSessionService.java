@@ -32,7 +32,7 @@ public class WorkoutSessionService {
     public WorkoutSessionResponse createWorkoutSession(WorkoutSessionRequest request) {
         String userId = securityUtils.getCurrentUserId();
 
-        log.info("Creating workout session for user: {}", userId);
+        log.info("Creating workout session for user: {} request: {}", userId, request);
 
         // 1. 세션 엔티티 빌드
         WorkoutSessionEntity session = WorkoutSessionEntity.builder()
@@ -44,9 +44,8 @@ public class WorkoutSessionService {
             .durationMin(request.getDurationMin())
             .readinessLevel(request.getReadinessLevel())
             .currentPainAreas(request.getCurrentPainAreas())
-            .doms(request.getDoms())
+            .doms(request.getCurrentDoms())
             .unavailableEquipment(request.getUnavailableEquipment())
-            .sessionNote(request.getSessionNote())
             .build();
 
         // 2. 세트 엔티티 리스트 변환 및 연관관계 설정
@@ -69,7 +68,7 @@ public class WorkoutSessionService {
                 .build())
             .toList();
 
-        session.getWorkoutSets().addAll(sets);
+        session.setWorkoutSets(sets);
 
         // 3. 저장 (Cascade 설정으로 인해 세션만 저장해도 세트가 함께 저장됨)
         WorkoutSessionEntity savedSession = sessionRepository.save(session);

@@ -1,14 +1,17 @@
 package com.fitcore.api.domain.routine.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,11 +19,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fitcore.api.domain.routine.dto.Doms;
+import com.fitcore.api.domain.routine.dto.Prescription;
+import com.fitcore.api.domain.routine.dto.RoutineBlock;
 import com.fitcore.api.domain.routine.entity.RoutineDraftEntity;
 import com.fitcore.api.domain.routine.entity.RoutineFinalEntity;
 import com.fitcore.api.domain.routine.repository.RoutineDraftRepository;
 import com.fitcore.api.domain.routine.repository.RoutineFinalRepository;
-import com.fitcore.api.domain.routine.request.RoutineDraftRequest;
 import com.fitcore.api.domain.routine.request.RoutineFinalRequest;
 import com.fitcore.api.domain.routine.request.RoutineGenerateRequest;
 import com.fitcore.api.domain.routine.response.RoutineDraftResponse;
@@ -31,7 +36,10 @@ import com.fitcore.api.global.error.exception.BusinessException;
 import com.fitcore.api.infrastructure.ai.client.AiClient;
 import com.fitcore.api.infrastructure.ai.dto.AiRoutineRequest;
 import com.fitcore.api.infrastructure.ai.dto.AiRoutineResponse;
+import com.fitcore.api.infrastructure.ai.enums.GenerationStatus;
+import com.fitcore.api.infrastructure.ai.enums.StatusReasonCode;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -44,23 +52,18 @@ public class RoutineService {
 
     @Transactional
     public RoutineDraftResponse generateRoutine(RoutineGenerateRequest request) {
-        String draftId = UUID.randomUUID().toString();
-
-        // 1. 요청 데이터를 AI 서버 전용 DTO로 매핑
         AiRoutineRequest aiRequest = mapToAiRequest(request);
+        AiRoutineResponse res = aiClient.generateRoutine(aiRequest);
+        res.setIsFallback(Boolean.TRUE.equals(res.getIsFallback()));
+        log.info("AI Response: {}", res);
 
         try {
-            // 2. AI 서버 호출
-            AiRoutineResponse res = aiClient.generateRoutine(aiRequest);
-            System.out.println(res);
-            // 3. 성공 시 DB 저장 (Audit Trail)
             RoutineDraftEntity successEntity = RoutineDraftEntity.builder()
-                .id(res.getRoutineDraftId())
                 .userId(securityUtils.getCurrentUserId())
-                .generationStatus(res.getGenerationStatus().name())
-                .statusReasonCode(res.getStatusReasonCode().name())
+                .generationStatus(res.getGenerationStatus())
+                .statusReasonCode(res.getStatusReasonCode())
                 .targetSplitLabel(res.getSummaryTitle())
-                .isFallback(Boolean.TRUE.equals(res.getIsFallback()))
+                .isFallback(res.getIsFallback())
                 .requestPayloadSnapshot(objectMapper.convertValue(request, new TypeReference<>() {
                 }))
                 .responsePayloadSnapshot(objectMapper.convertValue(res, new TypeReference<>() {
@@ -69,21 +72,66 @@ public class RoutineService {
                 .build();
 
             return RoutineDraftResponse.fromEntity(routineDraftRepository.save(successEntity));
-
         } catch (Exception e) {
-            e.printStackTrace();
-            RoutineDraftEntity failedEntity = RoutineDraftEntity.builder()
-                .id(draftId)
+            log.error(e.toString());
+            RoutineDraftEntity aiFailEntity = RoutineDraftEntity.builder()
                 .userId(securityUtils.getCurrentUserId())
-                .generationStatus("FAILED")
-                .statusReasonCode("AI_SERVER_ERROR")
+                .generationStatus(GenerationStatus.failed)
+                .statusReasonCode(StatusReasonCode.llmTimeout)
+                .targetSplitLabel("기본 push 루틴") // 디폴트 응답 타이틀
+                .isFallback(true)
                 .requestPayloadSnapshot(objectMapper.convertValue(request, new TypeReference<>() {
                 }))
-                .rationaleSummary(Arrays.asList("Error"))
+                .responsePayloadSnapshot(
+                    objectMapper.convertValue(createAiFailResponse(), new TypeReference<>() { // 디폴트 루틴
+                    }))
+                .rationaleSummary(List.of("LLM 응답이 제한 시간 안에 오지 않아 규칙 기반 기본 루틴으로 전환했다.")) // 디폴트
                 .build();
 
-            return RoutineDraftResponse.fromEntity(routineDraftRepository.save(failedEntity));
+            return RoutineDraftResponse.fromEntity(routineDraftRepository.save(aiFailEntity));
         }
+    }
+
+    private AiRoutineResponse createAiFailResponse() {
+        List<Prescription> prescriptions = new ArrayList<>();
+
+        for (int i = 1; i <= 2; i++) {
+            Prescription p = new Prescription();
+            p.setSetIndex(i);
+            p.setSetType("working");
+            p.setTargetReps(5);
+            p.setTargetWeightKg(BigDecimal.valueOf(75));
+            p.setTargetRir(2);
+            p.setTargetRestSec(120);
+            prescriptions.add(p);
+        }
+
+        // 2. RoutineBlock 생성 및 값 설정
+        RoutineBlock benchPressBlock = getRoutineBlock(prescriptions);
+
+        // 3. 최종 응답 객체 생성 (AiRoutineResponse의 구조에 따라 적절히 반환)
+        List<RoutineBlock> blocks = new ArrayList<>();
+        blocks.add(benchPressBlock);
+
+        AiRoutineResponse response = new AiRoutineResponse();
+        response.setRoutineBlocks(blocks); // 필드명이 routineBlocks라고 가정
+
+        return response;
+    }
+
+    private static @NonNull RoutineBlock getRoutineBlock(List<Prescription> prescriptions) {
+        RoutineBlock benchPressBlock = new RoutineBlock();
+        benchPressBlock.setOrder(1);
+        benchPressBlock.setExerciseId("barbell_bench_press");
+        benchPressBlock.setExerciseName("Barbell Bench Press");
+        benchPressBlock.setMovementPattern("horizontalPush");
+        benchPressBlock.setPrimaryMuscles(Arrays.asList("chest", "triceps"));
+        benchPressBlock.setEquipmentType("barbell");
+        benchPressBlock.setDefaultRestSec(120);
+        benchPressBlock.setPrescription(prescriptions);
+        benchPressBlock.setExerciseRationale("최근 수행 성공 기록을 기준으로 마지막 확인 중량 유지");
+        benchPressBlock.setSubstitutionCandidates(new ArrayList<>());
+        return benchPressBlock;
     }
 
     private AiRoutineRequest mapToAiRequest(RoutineGenerateRequest request) {
@@ -101,50 +149,26 @@ public class RoutineService {
             .build();
     }
 
-    private List<AiRoutineRequest.DomEntryDto> convertDomsToList(List<RoutineGenerateRequest.DomsRequest> doms) {
+    private List<Doms> convertDomsToList(List<Doms> doms) {
         if (doms == null || doms.isEmpty()) {
             return Collections.emptyList(); // 빈 리스트 반환
         }
 
         return doms.stream()
-            .map(d -> AiRoutineRequest.DomEntryDto.builder()
+            .map(d -> Doms.builder()
                 .bodyPart(d.getBodyPart())          // bodyPart -> muscle 매핑
                 .level(d.getLevel())
                 .build())
             .collect(Collectors.toList());
     }
 
-    // 1. 루틴 초안 저장 (Request -> Entity -> Response)
-    @Transactional
-    public RoutineDraftResponse saveDraft(RoutineDraftRequest request) {
-        String userId = securityUtils.getCurrentUserId();
-
-        // DTO를 사용하여 Entity 생성
-        RoutineDraftEntity draft = RoutineDraftEntity.builder()
-            .userId(userId)
-            .sourceProfileVersion(request.getSourceProfileVersion())
-            .sourceWorkoutSessionIds(request.getSourceWorkoutSessionIds())
-            .targetSplitLabel(request.getTargetSplitLabel())
-            .requestPayloadSnapshot(request.getRequestPayloadSnapshot())
-            // 시스템 내부 기본값 설정
-            .generationStatus("PENDING")
-            .statusReasonCode("CREATED")
-            .isFallback(false)
-            .createdAt(LocalDateTime.now())
-            .build();
-
-        RoutineDraftEntity savedDraft = routineDraftRepository.save(draft);
-        return RoutineDraftResponse.fromEntity(savedDraft);
-    }
-
     // 2. 루틴 확정 (Request -> Entity -> Response)
     @Transactional
     public RoutineFinalResponse finalizeRoutine(String routineDraftId, RoutineFinalRequest request) {
-        request.setRoutineDraftId(routineDraftId);
         String currentUserId = securityUtils.getCurrentUserId();
 
         // Draft 조회 및 권한 검증
-        RoutineDraftEntity draft = routineDraftRepository.findById(request.getRoutineDraftId())
+        RoutineDraftEntity draft = routineDraftRepository.findById(routineDraftId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
         if (!draft.getUserId().equals(currentUserId)) {
@@ -153,12 +177,11 @@ public class RoutineService {
 
         // Final Entity 생성
         RoutineFinalEntity finalEntity = RoutineFinalEntity.builder()
-            .id(UUID.randomUUID().toString())
             .routineDraft(draft)
             .userId(currentUserId)
             .targetWorkoutDate(request.getTargetWorkoutDate())
-            .targetSplitLabel(request.getTargetSplitLabel())
-            .finalRoutinePayload(draft.getResponsePayloadSnapshot()) // draft의 응답 스냅샷 활용
+            .targetSplitLabel(draft.getTargetSplitLabel())
+            .finalRoutinePayload(request.getFinalRoutinePayload())
             .acceptedWithoutEdits(request.getAcceptedWithoutEdits())
             .userEditSummary(request.getUserEditSummary())
             .savedAt(LocalDateTime.now())

@@ -10,6 +10,8 @@ import lombok.ToString;
 import java.util.Collections;
 import java.util.List;
 
+import com.fitcore.api.domain.routine.dto.Doms;
+
 @Getter
 @Setter
 @Builder
@@ -23,19 +25,8 @@ public class AiRoutineRequest {
     private String readinessLevel = "normal";
     private int timeAvailableMin;
     private List<String> currentPainAreas = Collections.emptyList();
-    private List<DomEntryDto> doms = Collections.emptyList();
+    private List<Doms> doms = Collections.emptyList();
     private List<String> unavailableEquipment = Collections.emptyList();
     private String goal;
     private String userNote;
-
-    // 파이썬의 DomEntry 클래스에 대응하는 내부 DTO 또는 별도 클래스
-    @Getter
-    @Setter
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class DomEntryDto {
-        private String bodyPart;
-        private String level;
-    }
 }
