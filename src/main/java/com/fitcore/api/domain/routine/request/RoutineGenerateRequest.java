@@ -21,7 +21,7 @@ public class RoutineGenerateRequest {
     private String readinessLevel;
     private int timeAvailableMin;
     private List<String> currentPainAreas;
-    private List<Doms> doms;
+    private List<Doms> currentDoms;
     private List<String> unavailableEquipment;
     private String goal;
     private String userNote;

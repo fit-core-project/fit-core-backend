@@ -52,12 +52,14 @@ public class RoutineService {
 
     @Transactional
     public RoutineDraftResponse generateRoutine(RoutineGenerateRequest request) {
-        AiRoutineRequest aiRequest = mapToAiRequest(request);
-        AiRoutineResponse res = aiClient.generateRoutine(aiRequest);
-        res.setIsFallback(Boolean.TRUE.equals(res.getIsFallback()));
-        log.info("AI Response: {}", res);
+        log.info("AI Routine Generate UserId: {} Request: {}", securityUtils.getCurrentUserId(), request);
 
         try {
+            AiRoutineRequest aiRequest = mapToAiRequest(request);
+            AiRoutineResponse res = aiClient.generateRoutine(aiRequest);
+            res.setIsFallback(Boolean.TRUE.equals(res.getIsFallback()));
+            log.info("AI Response: {}", res);
+
             RoutineDraftEntity successEntity = RoutineDraftEntity.builder()
                 .userId(securityUtils.getCurrentUserId())
                 .generationStatus(res.getGenerationStatus())
@@ -76,7 +78,7 @@ public class RoutineService {
             log.error(e.toString());
             RoutineDraftEntity aiFailEntity = RoutineDraftEntity.builder()
                 .userId(securityUtils.getCurrentUserId())
-                .generationStatus(GenerationStatus.failed)
+                .generationStatus(GenerationStatus.fallback)
                 .statusReasonCode(StatusReasonCode.llmTimeout)
                 .targetSplitLabel("기본 push 루틴") // 디폴트 응답 타이틀
                 .isFallback(true)
@@ -142,7 +144,7 @@ public class RoutineService {
             .readinessLevel(request.getReadinessLevel())
             .timeAvailableMin(request.getTimeAvailableMin())
             .currentPainAreas(request.getCurrentPainAreas())
-            .doms(convertDomsToList(request.getDoms()))
+            .doms(convertDomsToList(request.getCurrentDoms()))
             .unavailableEquipment(request.getUnavailableEquipment()) // 예시: 전체 장비 리스트 등에서 제외하여 매핑
             .goal(request.getGoal())
             .userNote(request.getUserNote())

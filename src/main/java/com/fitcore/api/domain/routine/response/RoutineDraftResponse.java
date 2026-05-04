@@ -30,7 +30,7 @@ public class RoutineDraftResponse {
             .generationStatus(entity.getGenerationStatus())
             .statusReasonCode(entity.getStatusReasonCode())
             .isFallback(entity.isFallback())
-            .totalEstimatedTime(0) // 필드 왜 없음?
+            .totalEstimatedTime(entity.getRequestPayloadSnapshot().getTimeAvailableMin()) // 필드 왜 없음?
             .summaryTitle(entity.getResponsePayloadSnapshot().getSummaryTitle())
             .rationaleSummary(entity.getRationaleSummary())
             .warnings(entity.getResponsePayloadSnapshot().getWarnings())
