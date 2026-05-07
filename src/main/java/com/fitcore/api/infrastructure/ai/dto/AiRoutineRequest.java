@@ -23,7 +23,7 @@ public class AiRoutineRequest {
     private List<String> targetMuscles = Collections.emptyList();
     private String readinessLevel = "normal";
     private int timeAvailableMin;
-    private List<String> painAreas = Collections.emptyList();
+    private List<Map<String, String>> painAreas = Collections.emptyList();
     private Map<String, Integer> domsData = Collections.emptyMap();
     private List<String> equipment = Collections.emptyList();
     private String goal;

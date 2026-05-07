@@ -10,6 +10,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,6 +32,13 @@ public class WorkoutSessionController {
     public ResponseEntity<Page<WorkoutSessionResponse>> getRecentWorkouts(
         @PageableDefault(size = 10, sort = "workoutDate", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(workoutSessionService.getWorkoutSessions(pageable));
+    }
+
+    @GetMapping("/{workoutSessionId}")
+    @Operation(summary = "운동 세션 조회", description = "특정 운동 세션을 조회합니다.")
+    public ResponseEntity<WorkoutSessionResponse> getWorkoutSessionById(
+        @PathVariable String workoutSessionId) {
+        return ResponseEntity.ok(workoutSessionService.getWorkoutSessionById(workoutSessionId));
     }
 
     @PostMapping

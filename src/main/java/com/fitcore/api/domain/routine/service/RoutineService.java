@@ -148,7 +148,9 @@ public class RoutineService {
             .targetMuscles(request.getTargetMuscles())
             .readinessLevel(request.getReadinessLevel())
             .timeAvailableMin(request.getTimeAvailableMin())
-            .painAreas(request.getCurrentPainAreas())
+            .painAreas(request.getCurrentPainAreas().stream()
+                .map(area -> Map.of("bodyPart", area)) // 각 문자열을 { "part": "문자열" } 형태의 맵으로 변환
+                .toList())
             .domsData(convertDomsToMap(request.getCurrentDoms()))
             .equipment(request.getUnavailableEquipment()) // 예시: 전체 장비 리스트 등에서 제외하여 매핑
             .goal(request.getGoal())
