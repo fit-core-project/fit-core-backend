@@ -15,7 +15,6 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.annotations.JdbcTypeCode;
@@ -23,6 +22,7 @@ import org.hibernate.annotations.SoftDelete;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
+import com.fitcore.api.domain.routine.dto.Doms;
 import com.fitcore.api.domain.user.dto.BodyComposition;
 import com.fitcore.api.domain.user.dto.PainAreas;
 import com.fitcore.api.domain.user.dto.StrengthBaseline;
@@ -97,6 +97,9 @@ public class UserProfileEntity extends BaseDeleteEntity {
     @Column(name = "profile_version")
     private Integer profileVersion = 1;
 
+    @Column(name = "time_available")
+    private Integer timeAvailable;
+
     // --- JSON 필드 매핑 ---
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "available_days", columnDefinition = "JSON")
@@ -114,8 +117,11 @@ public class UserProfileEntity extends BaseDeleteEntity {
     @Column(name = "pain_areas", columnDefinition = "JSON")
     private List<PainAreas> painAreas;
     @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "doms", columnDefinition = "JSON")
+    private List<Doms> doms;
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "strength_baseline", columnDefinition = "JSON")
-    private Map<String, List<StrengthBaseline>> strengthBaseline;
+    private List<StrengthBaseline> strengthBaseline;
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "body_composition_snapshot", columnDefinition = "JSON")
     private List<BodyComposition> bodyCompositionSnapshot;

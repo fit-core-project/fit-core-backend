@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.util.List;
 
+import com.fitcore.api.domain.routine.dto.Prescription;
 import com.fitcore.api.domain.routine.dto.RoutineBlock;
 import com.fitcore.api.domain.routine.entity.RoutineDraftEntity;
 import com.fitcore.api.infrastructure.ai.enums.GenerationStatus;
@@ -30,7 +31,10 @@ public class RoutineDraftResponse {
             .generationStatus(entity.getGenerationStatus())
             .statusReasonCode(entity.getStatusReasonCode())
             .isFallback(entity.isFallback())
-            .totalEstimatedTime(entity.getRequestPayloadSnapshot().getTimeAvailableMin()) // 필드 왜 없음?
+            .totalEstimatedTime(entity.getResponsePayloadSnapshot().getRoutineBlocks().stream()
+                .flatMap(block -> block.getPrescription().stream())
+                .mapToInt(Prescription::getTargetRestSec) // int라면 에러 없음
+                .sum()) // 필드 왜 없음?
             .summaryTitle(entity.getResponsePayloadSnapshot().getSummaryTitle())
             .rationaleSummary(entity.getRationaleSummary())
             .warnings(entity.getResponsePayloadSnapshot().getWarnings())

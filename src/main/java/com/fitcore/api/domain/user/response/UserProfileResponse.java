@@ -9,9 +9,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.fitcore.api.domain.routine.dto.Doms;
 import com.fitcore.api.domain.user.dto.BodyComposition;
 import com.fitcore.api.domain.user.dto.PainAreas;
 import com.fitcore.api.domain.user.dto.StrengthBaseline;
@@ -27,7 +27,7 @@ import com.fitcore.api.domain.user.enums.UserStatus;
 @ToString
 @NoArgsConstructor
 public class UserProfileResponse {
-    private Long userId;
+    private String userId;
     private String email;
     private String name;
     private String nickname;
@@ -35,6 +35,7 @@ public class UserProfileResponse {
     private Gender gender;
     private LocalDate birthDate;
     private UserStatus status;
+    private Integer timeAvailable;
     private String notes;
     //    private Set<UserRole> roles = new HashSet<>();
     private List<String> linkedProviders;
@@ -50,11 +51,13 @@ public class UserProfileResponse {
     private List<String> unpreferredExerciseIds;
     private List<String> preferredExerciseIds;
     private List<PainAreas> painAreas;
-    private Map<String, List<StrengthBaseline>> strengthBaseline;
+    private List<Doms> doms;
+    private List<StrengthBaseline> strengthBaseline;
     private Integer profileVersion;
     private List<BodyComposition> bodyCompositionSnapshot;
 
     public UserProfileResponse(UserProfileEntity entity, List<String> linkedProviders) {
+        this.userId = entity.getUserId();
         this.email = entity.getEmail();
         this.name = entity.getName();
         this.nickname = entity.getNickname();
@@ -62,6 +65,7 @@ public class UserProfileResponse {
         this.gender = entity.getGender();
         this.birthDate = entity.getBirthDate();
         this.status = entity.getStatus();
+        this.timeAvailable = entity.getTimeAvailable();
         this.notes = entity.getNotes();
 //        this.roles = entity.getRoles();
         this.linkedProviders = linkedProviders;
@@ -77,6 +81,7 @@ public class UserProfileResponse {
         this.unpreferredExerciseIds = entity.getUnpreferredExerciseIds();
         this.preferredExerciseIds = entity.getPreferredExerciseIds();
         this.painAreas = entity.getPainAreas();
+        this.doms = entity.getDoms();
         this.strengthBaseline = entity.getStrengthBaseline();
         this.profileVersion = entity.getProfileVersion();
         List<BodyComposition> source = entity.getBodyCompositionSnapshot();

@@ -9,8 +9,7 @@ import lombok.ToString;
 
 import java.util.Collections;
 import java.util.List;
-
-import com.fitcore.api.domain.routine.dto.Doms;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -24,9 +23,9 @@ public class AiRoutineRequest {
     private List<String> targetMuscles = Collections.emptyList();
     private String readinessLevel = "normal";
     private int timeAvailableMin;
-    private List<String> currentPainAreas = Collections.emptyList();
-    private List<Doms> doms = Collections.emptyList();
-    private List<String> unavailableEquipment = Collections.emptyList();
+    private List<String> painAreas = Collections.emptyList();
+    private Map<String, Integer> domsData = Collections.emptyMap();
+    private List<String> equipment = Collections.emptyList();
     private String goal;
     private String userNote;
 }

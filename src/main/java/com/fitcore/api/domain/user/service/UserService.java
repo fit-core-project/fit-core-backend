@@ -13,6 +13,8 @@ import com.fitcore.api.domain.user.entity.UserProfileEntity;
 import com.fitcore.api.domain.user.repository.SocialAccountRepository;
 import com.fitcore.api.domain.user.repository.UserRepository;
 import com.fitcore.api.domain.user.request.UserProfileUpdateRequest;
+import com.fitcore.api.domain.user.response.UserConditionResponse;
+import com.fitcore.api.domain.user.response.UserPreferencesResponse;
 import com.fitcore.api.domain.user.response.UserProfileResponse;
 import com.fitcore.api.global.common.util.SecurityUtils;
 import com.fitcore.api.global.error.ErrorCode;
@@ -38,6 +40,22 @@ public class UserService {
             .toList();
 
         return new UserProfileResponse(user, linkedProviders);
+    }
+
+    public UserConditionResponse getUserCondition() {
+        String userId = securityUtils.getCurrentUserId();
+        UserProfileEntity user = userRepository.findById(userId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        return new UserConditionResponse(user);
+    }
+
+    public UserPreferencesResponse getUserPreferences() {
+        String userId = securityUtils.getCurrentUserId();
+        UserProfileEntity user = userRepository.findById(userId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        return new UserPreferencesResponse(user);
     }
 
     public UserProfileResponse updateMyProfile(UserProfileUpdateRequest request) {

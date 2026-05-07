@@ -1,0 +1,41 @@
+package com.fitcore.api.domain.exercise.service;
+
+import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.fitcore.api.domain.exercise.repository.ExerciseTierRepository;
+import com.fitcore.api.domain.exercise.response.ExerciseTierResponse;
+import com.fitcore.api.domain.exercise.response.RecentRecordResponse;
+import com.fitcore.api.domain.workout.components.WorkoutSessionComponents;
+import com.fitcore.api.domain.workout.entity.WorkoutSetEntity;
+import com.fitcore.api.global.common.util.SecurityUtils;
+import com.fitcore.api.global.error.ErrorCode;
+import com.fitcore.api.global.error.exception.BusinessException;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class ExerciseTierService {
+    private final SecurityUtils securityUtils;
+    private final ExerciseTierRepository exerciseTierRepository;
+    private final WorkoutSessionComponents workoutSessionComponents;
+
+    public List<ExerciseTierResponse> getAllExerciseTiers() {
+        return exerciseTierRepository.findAll().stream()
+            .map(ExerciseTierResponse::fromEntity)
+            .collect(Collectors.toList());
+    }
+
+    public RecentRecordResponse getRecentRecord(String exerciseId) {
+        WorkoutSetEntity workoutSet =
+            workoutSessionComponents.findLatestByUserAndExercise(securityUtils.getCurrentUserId(), exerciseId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.EXERCISE_NOT_FOUND));
+
+        return RecentRecordResponse.fromEntity(workoutSet);
+    }
+}

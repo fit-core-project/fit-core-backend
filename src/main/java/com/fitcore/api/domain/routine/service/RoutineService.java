@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
@@ -53,9 +54,9 @@ public class RoutineService {
     @Transactional
     public RoutineDraftResponse generateRoutine(RoutineGenerateRequest request) {
         log.info("AI Routine Generate UserId: {} Request: {}", securityUtils.getCurrentUserId(), request);
+        AiRoutineRequest aiRequest = mapToAiRequest(request);
 
         try {
-            AiRoutineRequest aiRequest = mapToAiRequest(request);
             AiRoutineResponse res = aiClient.generateRoutine(aiRequest);
             res.setIsFallback(Boolean.TRUE.equals(res.getIsFallback()));
             log.info("AI Response: {}", res);
@@ -69,6 +70,8 @@ public class RoutineService {
                 .requestPayloadSnapshot(objectMapper.convertValue(request, new TypeReference<>() {
                 }))
                 .responsePayloadSnapshot(objectMapper.convertValue(res, new TypeReference<>() {
+                }))
+                .adapterRequestSnapshot(objectMapper.convertValue(aiRequest, new TypeReference<>() {
                 }))
                 .rationaleSummary(res.getRationaleSummary())
                 .build();
@@ -87,6 +90,8 @@ public class RoutineService {
                 .responsePayloadSnapshot(
                     objectMapper.convertValue(createAiFailResponse(), new TypeReference<>() { // 디폴트 루틴
                     }))
+                .adapterRequestSnapshot(objectMapper.convertValue(aiRequest, new TypeReference<>() {
+                }))
                 .rationaleSummary(List.of("LLM 응답이 제한 시간 안에 오지 않아 규칙 기반 기본 루틴으로 전환했다.")) // 디폴트
                 .build();
 
@@ -143,25 +148,35 @@ public class RoutineService {
             .targetMuscles(request.getTargetMuscles())
             .readinessLevel(request.getReadinessLevel())
             .timeAvailableMin(request.getTimeAvailableMin())
-            .currentPainAreas(request.getCurrentPainAreas())
-            .doms(convertDomsToList(request.getCurrentDoms()))
-            .unavailableEquipment(request.getUnavailableEquipment()) // 예시: 전체 장비 리스트 등에서 제외하여 매핑
+            .painAreas(request.getCurrentPainAreas())
+            .domsData(convertDomsToMap(request.getCurrentDoms()))
+            .equipment(request.getUnavailableEquipment()) // 예시: 전체 장비 리스트 등에서 제외하여 매핑
             .goal(request.getGoal())
             .userNote(request.getUserNote())
             .build();
     }
 
-    private List<Doms> convertDomsToList(List<Doms> doms) {
+    private Map<String, Integer> convertDomsToMap(List<Doms> doms) {
         if (doms == null || doms.isEmpty()) {
-            return Collections.emptyList(); // 빈 리스트 반환
+            return Collections.emptyMap();
         }
 
         return doms.stream()
-            .map(d -> Doms.builder()
-                .bodyPart(d.getBodyPart())          // bodyPart -> muscle 매핑
-                .level(d.getLevel())
-                .build())
-            .collect(Collectors.toList());
+            .filter(d -> d.getBodyPart() != null && d.getLevel() != null)
+            .collect(Collectors.toMap(
+                Doms::getBodyPart,
+                d -> mapLevelToInt(d.getLevel()), // 숫자로 변환
+                (existing, replacement) -> existing
+            ));
+    }
+
+    private Integer mapLevelToInt(String level) {
+        return switch (level.toLowerCase()) {
+            case "mild" -> 1;
+            case "moderate" -> 2;
+            case "severe" -> 3;
+            default -> 1;
+        };
     }
 
     // 2. 루틴 확정 (Request -> Entity -> Response)

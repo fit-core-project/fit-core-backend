@@ -7,7 +7,6 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 import com.fitcore.api.domain.user.dto.BodyComposition;
 import com.fitcore.api.domain.user.dto.PainAreas;
@@ -41,6 +40,6 @@ public class UserProfileUpdateRequest {
     private List<String> unpreferredExerciseIds;
     private List<String> preferredExerciseIds;
     private List<PainAreas> painAreas;
-    private Map<String, List<StrengthBaseline>> strengthBaseline;
+    private List<StrengthBaseline> strengthBaseline;
     private List<BodyComposition> bodyCompositionSnapshot;
 }
