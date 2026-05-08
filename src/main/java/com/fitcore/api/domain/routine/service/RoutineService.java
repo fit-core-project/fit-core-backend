@@ -224,7 +224,7 @@ public class RoutineService {
 
         // 1. 데이터 조회
         RoutineFinalEntity finalEntity = routineFinalRepository.findById(finalId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(ErrorCode.ROUTINE_NOT_FOUND));
 
         // 2. 권한 체크 (본인의 루틴인지 확인)
         if (!finalEntity.getUserId().equals(currentUserId)) {

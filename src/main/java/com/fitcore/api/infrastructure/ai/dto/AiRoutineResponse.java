@@ -10,7 +10,6 @@ import lombok.ToString;
 import java.util.Collections;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fitcore.api.domain.routine.dto.RoutineBlock;
 import com.fitcore.api.infrastructure.ai.enums.GenerationStatus;
 import com.fitcore.api.infrastructure.ai.enums.StatusReasonCode;
@@ -29,7 +28,6 @@ public class AiRoutineResponse {
 
     private StatusReasonCode statusReasonCode;
 
-    @JsonProperty("is_fallback")
     private Boolean isFallback;
 
     private String summaryTitle;
