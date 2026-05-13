@@ -30,6 +30,8 @@ public class AiRoutineResponse {
 
     private Boolean isFallback;
 
+    private Integer totalEstimatedTime;
+
     private String summaryTitle;
 
     private List<String> rationaleSummary;

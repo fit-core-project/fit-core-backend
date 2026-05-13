@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,9 @@ import com.fitcore.api.global.auth.PrincipalDetails;
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     private final TokenProvider tokenProvider;
+
+    @Value("${app.frontend-url:http://localhost:3000}")
+    private String frontendUrl;
 
     @Override
     public void onAuthenticationSuccess(
@@ -51,7 +55,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
                 // 4. [중요] 리다이렉트 URL 생성 (토큰 + 모드 전달)
                 UriComponentsBuilder builder =
-                    UriComponentsBuilder.fromUriString("http://localhost:3000/oauth2/redirect")
+                    UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/redirect")
                         .queryParam("token", token);
 
                 // mode가 존재하면 파라미터로 추가 (프론트엔드에서 신규/링크 구분 가능)

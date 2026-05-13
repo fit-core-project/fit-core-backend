@@ -13,25 +13,21 @@ import com.fitcore.api.domain.routine.entity.RoutineFinalEntity;
 @Data
 @Builder
 public class RoutineFinalResponse {
-    private String id;
+    private String routineFinalId;
     private String routineDraftId;
     private String userId;
     private LocalDate targetWorkoutDate;
     private String targetSplitLabel;
 
-    // 확정된 루틴의 상세 데이터 (JSON)
     private FinalRoutinePayload finalRoutinePayload;
 
     private Boolean acceptedWithoutEdits;
     private List<String> userEditSummary;
     private LocalDateTime savedAt;
 
-    /**
-     * Entity를 Response DTO로 변환하는 정적 메서드
-     */
     public static RoutineFinalResponse fromEntity(RoutineFinalEntity entity) {
         return RoutineFinalResponse.builder()
-            .id(entity.getId())
+            .routineFinalId(entity.getId())
             .routineDraftId(entity.getRoutineDraft().getId())
             .userId(entity.getUserId())
             .targetWorkoutDate(entity.getTargetWorkoutDate())

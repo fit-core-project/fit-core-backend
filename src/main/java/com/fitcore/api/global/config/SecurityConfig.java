@@ -37,9 +37,9 @@ public class SecurityConfig {
             .formLogin(AbstractHttpConfigurer::disable) // 기본 로그인 폼 끔
             .httpBasic(AbstractHttpConfigurer::disable) // Bearer 방식을 쓸 거라 기본 인증 끔
 
-            // 세션을 사용하지 않음 (JWT 방식의 핵심)
+            // OAuth2 state 파라미터 저장을 위해 IF_REQUIRED 사용 (OAuth2 flow에서만 세션 생성)
             .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 
             // 경로별 권한 설정
             .authorizeHttpRequests(auth -> auth

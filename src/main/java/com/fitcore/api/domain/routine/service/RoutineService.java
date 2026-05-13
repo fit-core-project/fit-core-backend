@@ -65,7 +65,7 @@ public class RoutineService {
                 .userId(securityUtils.getCurrentUserId())
                 .generationStatus(res.getGenerationStatus())
                 .statusReasonCode(res.getStatusReasonCode())
-                .targetSplitLabel(res.getSummaryTitle())
+                .targetSplitLabel(request.getTargetSplitLabel() != null ? request.getTargetSplitLabel() : "")
                 .isFallback(res.getIsFallback())
                 .requestPayloadSnapshot(objectMapper.convertValue(request, new TypeReference<>() {
                 }))
@@ -83,7 +83,7 @@ public class RoutineService {
                 .userId(securityUtils.getCurrentUserId())
                 .generationStatus(GenerationStatus.fallback)
                 .statusReasonCode(StatusReasonCode.llmTimeout)
-                .targetSplitLabel("기본 push 루틴") // 디폴트 응답 타이틀
+                .targetSplitLabel(request.getTargetSplitLabel() != null ? request.getTargetSplitLabel() : "")
                 .isFallback(true)
                 .requestPayloadSnapshot(objectMapper.convertValue(request, new TypeReference<>() {
                 }))

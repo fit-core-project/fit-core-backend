@@ -1,13 +1,14 @@
 package com.fitcore.api.domain.routine.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
 
 import java.util.List;
 
-import com.fitcore.api.domain.routine.dto.Prescription;
 import com.fitcore.api.domain.routine.dto.RoutineBlock;
 import com.fitcore.api.domain.routine.entity.RoutineDraftEntity;
+import com.fitcore.api.infrastructure.ai.dto.AiRoutineResponse;
 import com.fitcore.api.infrastructure.ai.enums.GenerationStatus;
 import com.fitcore.api.infrastructure.ai.enums.StatusReasonCode;
 
@@ -17,6 +18,7 @@ public class RoutineDraftResponse {
     private String routineDraftId;
     private GenerationStatus generationStatus;
     private StatusReasonCode statusReasonCode;
+    @JsonProperty("isFallback")
     private boolean isFallback;
     private int totalEstimatedTime;
     private String summaryTitle;
@@ -24,21 +26,32 @@ public class RoutineDraftResponse {
     private List<String> warnings;
     private List<RoutineBlock> routineBlocks;
 
-
     public static RoutineDraftResponse fromEntity(RoutineDraftEntity entity) {
+        AiRoutineResponse res = entity.getResponsePayloadSnapshot();
         return RoutineDraftResponse.builder()
             .routineDraftId(entity.getId())
             .generationStatus(entity.getGenerationStatus())
             .statusReasonCode(entity.getStatusReasonCode())
             .isFallback(entity.isFallback())
-            .totalEstimatedTime(entity.getResponsePayloadSnapshot().getRoutineBlocks().stream()
-                .flatMap(block -> block.getPrescription().stream())
-                .mapToInt(Prescription::getTargetRestSec) // int라면 에러 없음
-                .sum()) // 필드 왜 없음?
-            .summaryTitle(entity.getResponsePayloadSnapshot().getSummaryTitle())
+            .totalEstimatedTime(resolveTotalEstimatedTime(res))
+            .summaryTitle(res.getSummaryTitle())
             .rationaleSummary(entity.getRationaleSummary())
-            .warnings(entity.getResponsePayloadSnapshot().getWarnings())
-            .routineBlocks(entity.getResponsePayloadSnapshot().getRoutineBlocks())
+            .warnings(res.getWarnings())
+            .routineBlocks(res.getRoutineBlocks())
             .build();
+    }
+
+    private static int resolveTotalEstimatedTime(AiRoutineResponse res) {
+        if (res.getTotalEstimatedTime() != null && res.getTotalEstimatedTime() > 0) {
+            return res.getTotalEstimatedTime();
+        }
+        if (res.getRoutineBlocks() == null || res.getRoutineBlocks().isEmpty()) {
+            return 0;
+        }
+        int totalSec = res.getRoutineBlocks().stream()
+            .flatMap(b -> b.getPrescription().stream())
+            .mapToInt(p -> 45 + (p.getTargetRestSec() > 0 ? p.getTargetRestSec() : 90))
+            .sum();
+        return Math.max(1, totalSec / 60);
     }
 }
