@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -158,18 +159,43 @@ public class RoutineService {
             .build();
     }
 
+    // FE UI 근육명 → AI DB enum 키 매핑 (routine_engine.py MUSCLE_REGISTRY 기준 SSOT)
+    private static final Map<String, List<String>> DOMS_MUSCLE_MAP = Map.ofEntries(
+        Map.entry("chest",          List.of("CHEST_UPPER", "CHEST_MID_LOWER")),
+        Map.entry("upper-back",     List.of("BACK_TRAPS")),
+        Map.entry("trapezius",      List.of("BACK_TRAPS")),
+        Map.entry("lats",           List.of("BACK_LATS")),
+        Map.entry("lower-back",     List.of("BACK_LOWER")),
+        Map.entry("front-deltoids", List.of("SHOULDER_FRONT")),
+        Map.entry("back-deltoids",  List.of("SHOULDER_REAR")),
+        Map.entry("deltoids",       List.of("SHOULDER_FRONT", "SHOULDER_REAR", "SHOULDER_LATERAL")),
+        Map.entry("side-deltoids",  List.of("SHOULDER_LATERAL")),
+        Map.entry("biceps",         List.of("ARM_BICEPS")),
+        Map.entry("triceps",        List.of("ARM_TRICEPS")),
+        Map.entry("forearm",        List.of("ARM_FOREARMS")),
+        Map.entry("abs",            List.of("CORE_ABS")),
+        Map.entry("obliques",       List.of("CORE_OBLIQUES")),
+        Map.entry("glutes",         List.of("LEG_GLUTES")),
+        Map.entry("hamstring",      List.of("LEG_HAMSTRINGS")),
+        Map.entry("quadriceps",     List.of("LEG_QUADS"))
+    );
+
     private Map<String, Integer> convertDomsToMap(List<Doms> doms) {
         if (doms == null || doms.isEmpty()) {
             return Collections.emptyMap();
         }
-
-        return doms.stream()
-            .filter(d -> d.getBodyPart() != null && d.getLevel() != null)
-            .collect(Collectors.toMap(
-                Doms::getBodyPart,
-                d -> mapLevelToInt(d.getLevel()), // 숫자로 변환
-                (existing, replacement) -> existing
-            ));
+        Map<String, Integer> result = new HashMap<>();
+        for (Doms d : doms) {
+            if (d.getBodyPart() == null || d.getLevel() == null) continue;
+            int levelInt = mapLevelToInt(d.getLevel());
+            List<String> dbKeys = DOMS_MUSCLE_MAP.getOrDefault(
+                d.getBodyPart().toLowerCase(), List.of(d.getBodyPart())
+            );
+            for (String dbKey : dbKeys) {
+                result.merge(dbKey, levelInt, Math::max);
+            }
+        }
+        return result;
     }
 
     private Integer mapLevelToInt(String level) {

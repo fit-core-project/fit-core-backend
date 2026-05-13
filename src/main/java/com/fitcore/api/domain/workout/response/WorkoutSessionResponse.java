@@ -25,7 +25,7 @@ public class WorkoutSessionResponse {
 
     // JSON 필드
     private List<String> currentPainAreas;
-    private List<Doms> doms;
+    private List<Doms> currentDoms;
     private List<String> unavailableEquipment;
 
     private String sessionNote;
@@ -46,7 +46,7 @@ public class WorkoutSessionResponse {
             .durationMin(entity.getDurationMin())
             .readinessLevel(entity.getReadinessLevel())
             .currentPainAreas(entity.getCurrentPainAreas())
-            .doms(entity.getDoms())
+            .currentDoms(entity.getDoms())
             .unavailableEquipment(entity.getUnavailableEquipment())
             .sessionNote(entity.getSessionNote())
             .createdAt(entity.getCreatedAt())
