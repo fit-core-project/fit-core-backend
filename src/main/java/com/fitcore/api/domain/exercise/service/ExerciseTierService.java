@@ -3,6 +3,7 @@ package com.fitcore.api.domain.exercise.service;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -12,10 +13,7 @@ import com.fitcore.api.domain.exercise.repository.ExerciseTierRepository;
 import com.fitcore.api.domain.exercise.response.ExerciseTierResponse;
 import com.fitcore.api.domain.exercise.response.RecentRecordResponse;
 import com.fitcore.api.domain.workout.components.WorkoutSessionComponents;
-import com.fitcore.api.domain.workout.entity.WorkoutSetEntity;
 import com.fitcore.api.global.common.util.SecurityUtils;
-import com.fitcore.api.global.error.ErrorCode;
-import com.fitcore.api.global.error.exception.BusinessException;
 
 @Service
 @RequiredArgsConstructor
@@ -31,11 +29,8 @@ public class ExerciseTierService {
             .collect(Collectors.toList());
     }
 
-    public RecentRecordResponse getRecentRecord(String exerciseId) {
-        WorkoutSetEntity workoutSet =
-            workoutSessionComponents.findLatestByUserAndExercise(securityUtils.getCurrentUserId(), exerciseId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.EXERCISE_NOT_FOUND));
-
-        return RecentRecordResponse.fromEntity(workoutSet);
+    public Optional<RecentRecordResponse> getRecentRecord(String exerciseId) {
+        return workoutSessionComponents.findLatestByUserAndExercise(securityUtils.getCurrentUserId(), exerciseId)
+            .map(RecentRecordResponse::fromEntity);
     }
 }

@@ -28,6 +28,8 @@ public class ExerciseTierController {
 
     @GetMapping("/{exerciseId}/recent-record")
     public ResponseEntity<RecentRecordResponse> getRecentRecord(@PathVariable String exerciseId) {
-        return ResponseEntity.ok(exerciseTierService.getRecentRecord(exerciseId));
+        return exerciseTierService.getRecentRecord(exerciseId)
+            .map(ResponseEntity::ok)
+            .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }
