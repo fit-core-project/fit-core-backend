@@ -122,7 +122,11 @@ public class RoutineService {
         blocks.add(benchPressBlock);
 
         AiRoutineResponse response = new AiRoutineResponse();
-        response.setRoutineBlocks(blocks); // 필드명이 routineBlocks라고 가정
+        response.setRoutineBlocks(blocks);
+        response.setSummaryTitle("대체 루틴");
+        response.setRationaleSummary(List.of("AI 서버 연결이 지연되어 규칙 기반 기본 루틴으로 전환했습니다."));
+        response.setWarnings(List.of("AI 서버 연결이 지연되어 기본 루틴을 제공합니다."));
+        response.setTotalEstimatedTime(60);
 
         return response;
     }
@@ -177,8 +181,13 @@ public class RoutineService {
         Map.entry("abs",            List.of("CORE_ABS")),
         Map.entry("obliques",       List.of("CORE_OBLIQUES")),
         Map.entry("glutes",         List.of("LEG_GLUTES")),
+        Map.entry("gluteal",        List.of("LEG_GLUTES")),
         Map.entry("hamstring",      List.of("LEG_HAMSTRINGS")),
-        Map.entry("quadriceps",     List.of("LEG_QUADS"))
+        Map.entry("quadriceps",     List.of("LEG_QUADS")),
+        Map.entry("calves",         List.of("LEG_CALVES")),
+        Map.entry("adductor",       List.of("LEG_ADDUCTORS")),
+        Map.entry("abductors",      List.of("LEG_ABDUCTORS")),
+        Map.entry("knees",          List.of("LEG_QUADS", "LEG_HAMSTRINGS"))
     );
 
     private Map<String, Integer> convertDomsToMap(List<Doms> doms) {
