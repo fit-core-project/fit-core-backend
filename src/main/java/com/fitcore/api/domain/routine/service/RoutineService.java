@@ -66,7 +66,7 @@ public class RoutineService {
                 .userId(securityUtils.getCurrentUserId())
                 .generationStatus(res.getGenerationStatus())
                 .statusReasonCode(res.getStatusReasonCode())
-                .targetSplitLabel(request.getTargetSplitLabel() != null ? request.getTargetSplitLabel() : "")
+                .targetSplitLabel(request.getTargetSplitLabel() != null && !request.getTargetSplitLabel().isBlank() ? request.getTargetSplitLabel() : "custom")
                 .isFallback(res.getIsFallback())
                 .requestPayloadSnapshot(objectMapper.convertValue(request, new TypeReference<>() {
                 }))
@@ -84,7 +84,7 @@ public class RoutineService {
                 .userId(securityUtils.getCurrentUserId())
                 .generationStatus(GenerationStatus.fallback)
                 .statusReasonCode(StatusReasonCode.llmTimeout)
-                .targetSplitLabel(request.getTargetSplitLabel() != null ? request.getTargetSplitLabel() : "")
+                .targetSplitLabel(request.getTargetSplitLabel() != null && !request.getTargetSplitLabel().isBlank() ? request.getTargetSplitLabel() : "custom")
                 .isFallback(true)
                 .requestPayloadSnapshot(objectMapper.convertValue(request, new TypeReference<>() {
                 }))
@@ -186,6 +186,7 @@ public class RoutineService {
         Map.entry("quadriceps",     List.of("LEG_QUADS")),
         Map.entry("calves",         List.of("LEG_CALVES")),
         Map.entry("adductor",       List.of("LEG_ADDUCTORS")),
+        Map.entry("adductors",      List.of("LEG_ADDUCTORS")),
         Map.entry("abductors",      List.of("LEG_ABDUCTORS")),
         Map.entry("knees",          List.of("LEG_QUADS", "LEG_HAMSTRINGS"))
     );
@@ -235,7 +236,7 @@ public class RoutineService {
             .routineDraft(draft)
             .userId(currentUserId)
             .targetWorkoutDate(request.getTargetWorkoutDate())
-            .targetSplitLabel(draft.getTargetSplitLabel())
+            .targetSplitLabel(draft.getTargetSplitLabel() != null && !draft.getTargetSplitLabel().isBlank() ? draft.getTargetSplitLabel() : "custom")
             .finalRoutinePayload(request.getFinalRoutinePayload())
             .acceptedWithoutEdits(request.getAcceptedWithoutEdits())
             .userEditSummary(request.getUserEditSummary())
