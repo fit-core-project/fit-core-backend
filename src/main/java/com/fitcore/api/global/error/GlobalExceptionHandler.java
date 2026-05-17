@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -23,6 +24,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
             .status(errorCode.getStatus())
             .body(ErrorResponse.of(errorCode));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    protected ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException e) {
+        log.error("ValidationException: {}", e.getMessage());
+        ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_INPUT_VALUE);
+        return ResponseEntity.badRequest().body(response);
     }
 
     // 2. 일반적인 모든 예외(Exception) 처리 (최후의 보루)

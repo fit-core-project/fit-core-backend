@@ -37,7 +37,7 @@ public class RoutineController {
     @PostMapping("/drafts/{routineDraftId}/finalize")
     @Operation(summary = "루틴 초안 확정", description = "작성된 루틴 초안(Draft)을 기반으로 최종 루틴(Final)을 생성합니다.")
     public ResponseEntity<RoutineFinalResponse> finalizeRoutine(
-        @PathVariable String routineDraftId, @RequestBody RoutineFinalRequest routineFinalRequest) {
+        @PathVariable String routineDraftId, @Valid @RequestBody RoutineFinalRequest routineFinalRequest) {
         return ResponseEntity.ok(routineService.finalizeRoutine(routineDraftId, routineFinalRequest));
     }
 

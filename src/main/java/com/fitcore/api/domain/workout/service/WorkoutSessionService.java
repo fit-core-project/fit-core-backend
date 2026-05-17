@@ -15,7 +15,11 @@ import com.fitcore.api.domain.workout.entity.WorkoutSetEntity;
 import com.fitcore.api.domain.workout.repository.WorkoutSessionRepository;
 import com.fitcore.api.domain.workout.request.WorkoutSessionRequest;
 import com.fitcore.api.domain.workout.response.WorkoutSessionResponse;
+import com.fitcore.api.domain.routine.entity.RoutineFinalEntity;
+import com.fitcore.api.domain.routine.repository.RoutineFinalRepository;
 import com.fitcore.api.global.common.util.SecurityUtils;
+import com.fitcore.api.global.error.ErrorCode;
+import com.fitcore.api.global.error.exception.BusinessException;
 
 @Slf4j
 @Service
@@ -24,6 +28,7 @@ import com.fitcore.api.global.common.util.SecurityUtils;
 public class WorkoutSessionService {
     private final SecurityUtils securityUtils;
     private final WorkoutSessionRepository sessionRepository;
+    private final RoutineFinalRepository routineFinalRepository;
 
     /**
      * 운동 세션 및 세트 생성
@@ -33,6 +38,8 @@ public class WorkoutSessionService {
         String userId = securityUtils.getCurrentUserId();
 
         log.info("Creating workout session for user: {} request: {}", userId, request);
+
+        validateSourceRoutineFinal(request.getSourceRoutineFinalId(), userId);
 
         // 1. 세션 엔티티 빌드
         WorkoutSessionEntity session = WorkoutSessionEntity.builder()
@@ -74,6 +81,17 @@ public class WorkoutSessionService {
         WorkoutSessionEntity savedSession = sessionRepository.save(session);
 
         return WorkoutSessionResponse.fromEntity(savedSession);
+    }
+
+    private void validateSourceRoutineFinal(String sourceRoutineFinalId, String userId) {
+        if (sourceRoutineFinalId == null || sourceRoutineFinalId.isBlank()) {
+            return;
+        }
+        RoutineFinalEntity finalRoutine = routineFinalRepository.findById(sourceRoutineFinalId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.ROUTINE_NOT_FOUND));
+        if (!finalRoutine.getUserId().equals(userId)) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
     }
 
     /**

@@ -9,12 +9,16 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.fitcore.api.domain.routine.dto.Doms;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
 public class WorkoutSessionRequest {
+    @NotNull
     private LocalDate workoutDate;
     private String splitLabel;
     private String sourceRoutineFinalId;
@@ -28,5 +32,7 @@ public class WorkoutSessionRequest {
     private List<String> unavailableEquipment;
 
     // 세트 정보 리스트
+    @NotEmpty
+    @Valid
     private List<WorkoutSetRequest> sets;
 }

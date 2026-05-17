@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 
 import com.fitcore.api.domain.workout.request.WorkoutSessionRequest;
 import com.fitcore.api.domain.workout.response.WorkoutSessionResponse;
@@ -43,7 +44,7 @@ public class WorkoutSessionController {
 
     @PostMapping
     @Operation(summary = "운동 세션 생성", description = "새로운 운동 세션 기록을 생성하고 저장합니다.")
-    public ResponseEntity<WorkoutSessionResponse> createWorkout(@RequestBody WorkoutSessionRequest request) {
+    public ResponseEntity<WorkoutSessionResponse> createWorkout(@Valid @RequestBody WorkoutSessionRequest request) {
         return ResponseEntity.ok(workoutSessionService.createWorkoutSession(request));
     }
 }
