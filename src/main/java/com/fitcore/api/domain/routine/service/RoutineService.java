@@ -166,7 +166,7 @@ public class RoutineService {
 
     // FE UI 근육명 → AI DB enum 키 매핑 (routine_engine.py MUSCLE_REGISTRY 기준 SSOT)
     private static final Map<String, List<String>> DOMS_MUSCLE_MAP = Map.ofEntries(
-        Map.entry("chest",          List.of("CHEST_UPPER", "CHEST_MID_LOWER")),
+        Map.entry("chest",          List.of("CHEST_UPPER", "CHEST_MID", "CHEST_LOWER")),
         Map.entry("upper-back",     List.of("BACK_TRAPS")),
         Map.entry("trapezius",      List.of("BACK_TRAPS")),
         Map.entry("lats",           List.of("BACK_LATS")),
