@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
@@ -137,8 +138,8 @@ public class RoutineService {
         benchPressBlock.setExerciseId("barbell_bench_press");
         benchPressBlock.setExerciseName("Barbell Bench Press");
         benchPressBlock.setMovementPattern("horizontalPush");
-        benchPressBlock.setPrimaryMuscles(Arrays.asList("chest", "triceps"));
-        benchPressBlock.setEquipmentType("barbell");
+        benchPressBlock.setPrimaryMuscles(Arrays.asList("CHEST_MID", "ARM_TRICEPS"));
+        benchPressBlock.setEquipmentType("BARBELL");
         benchPressBlock.setDefaultRestSec(120);
         benchPressBlock.setPrescription(prescriptions);
         benchPressBlock.setExerciseRationale("최근 수행 성공 기록을 기준으로 마지막 확인 중량 유지");
@@ -150,7 +151,7 @@ public class RoutineService {
         return AiRoutineRequest.builder()
             .userId(securityUtils.getCurrentUserId())
             .targetSplitLabel(request.getTargetSplitLabel())
-            .targetMuscles(request.getTargetMuscles())
+            .targetMuscles(normalizeTargetMuscles(request.getTargetMuscles()))
             .readinessLevel(request.getReadinessLevel())
             .timeAvailableMin(request.getTimeAvailableMin())
             .painAreas(request.getCurrentPainAreas() == null ? Collections.emptyList() :
@@ -165,8 +166,32 @@ public class RoutineService {
     }
 
     // FE UI 근육명 → AI DB enum 키 매핑 (routine_engine.py MUSCLE_REGISTRY 기준 SSOT)
+    private static final Set<String> DB_MUSCLE_ENUMS = Set.of(
+        "ARM_BICEPS",
+        "ARM_FOREARMS",
+        "ARM_TRICEPS",
+        "BACK_LATS",
+        "BACK_LOWER",
+        "BACK_TRAPS",
+        "CHEST_LOWER",
+        "CHEST_MID",
+        "CHEST_UPPER",
+        "CORE_ABS",
+        "CORE_OBLIQUES",
+        "LEG_ABDUCTORS",
+        "LEG_ADDUCTORS",
+        "LEG_CALVES",
+        "LEG_GLUTES",
+        "LEG_HAMSTRINGS",
+        "LEG_QUADS",
+        "ROTATOR_CUFF",
+        "SHOULDER_FRONT",
+        "SHOULDER_LATERAL",
+        "SHOULDER_REAR"
+    );
+
     private static final Map<String, List<String>> DOMS_MUSCLE_MAP = Map.ofEntries(
-        Map.entry("chest",          List.of("CHEST_UPPER", "CHEST_MID_LOWER")),
+        Map.entry("chest",          List.of("CHEST_UPPER", "CHEST_MID", "CHEST_LOWER")),
         Map.entry("upper-back",     List.of("BACK_TRAPS")),
         Map.entry("trapezius",      List.of("BACK_TRAPS")),
         Map.entry("lats",           List.of("BACK_LATS")),
@@ -175,6 +200,7 @@ public class RoutineService {
         Map.entry("back-deltoids",  List.of("SHOULDER_REAR")),
         Map.entry("deltoids",       List.of("SHOULDER_FRONT", "SHOULDER_REAR", "SHOULDER_LATERAL")),
         Map.entry("side-deltoids",  List.of("SHOULDER_LATERAL")),
+        Map.entry("rotator-cuff",   List.of("ROTATOR_CUFF")),
         Map.entry("biceps",         List.of("ARM_BICEPS")),
         Map.entry("triceps",        List.of("ARM_TRICEPS")),
         Map.entry("forearm",        List.of("ARM_FOREARMS")),
@@ -200,7 +226,7 @@ public class RoutineService {
             if (d.getBodyPart() == null || d.getLevel() == null) continue;
             int levelInt = mapLevelToInt(d.getLevel());
             List<String> dbKeys = DOMS_MUSCLE_MAP.getOrDefault(
-                d.getBodyPart().toLowerCase(), List.of(d.getBodyPart())
+                d.getBodyPart().toLowerCase(), List.of(normalizeDbMuscleEnum(d.getBodyPart()))
             );
             for (String dbKey : dbKeys) {
                 result.merge(dbKey, levelInt, Math::max);
@@ -216,6 +242,25 @@ public class RoutineService {
             case "severe" -> 3;
             default -> 1;
         };
+    }
+
+    private List<String> normalizeTargetMuscles(List<String> targetMuscles) {
+        if (targetMuscles == null || targetMuscles.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return targetMuscles.stream()
+            .filter(muscle -> muscle != null && !muscle.isBlank())
+            .flatMap(muscle -> DOMS_MUSCLE_MAP.getOrDefault(
+                muscle.toLowerCase(),
+                List.of(normalizeDbMuscleEnum(muscle))
+            ).stream())
+            .distinct()
+            .toList();
+    }
+
+    private String normalizeDbMuscleEnum(String value) {
+        String upper = value.toUpperCase();
+        return DB_MUSCLE_ENUMS.contains(upper) ? upper : value;
     }
 
     // 2. 루틴 확정 (Request -> Entity -> Response)

@@ -9,10 +9,13 @@ import com.fitcore.api.domain.routine.dto.Prescription;
 import com.fitcore.api.domain.routine.dto.RoutineBlock;
 import com.fitcore.api.global.common.util.SecurityUtils;
 import com.fitcore.api.infrastructure.ai.client.AiClient;
+import com.fitcore.api.infrastructure.ai.dto.AiRoutineRequest;
 import com.fitcore.api.infrastructure.ai.dto.AiRoutineResponse;
 import com.fitcore.api.infrastructure.ai.enums.GenerationStatus;
 import com.fitcore.api.infrastructure.ai.enums.StatusReasonCode;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -22,6 +25,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -71,6 +75,11 @@ class RoutineWorkoutFlowIntegrationTest {
             .getResponse()
             .getContentAsString();
 
+        ArgumentCaptor<AiRoutineRequest> aiRequestCaptor = ArgumentCaptor.forClass(AiRoutineRequest.class);
+        verify(aiClient).generateRoutine(aiRequestCaptor.capture());
+        Assertions.assertThat(aiRequestCaptor.getValue().getTargetMuscles())
+            .containsExactly("CHEST_UPPER", "CHEST_MID", "CHEST_LOWER", "ARM_TRICEPS");
+
         JsonNode generated = objectMapper.readTree(generateResponse);
         String draftId = generated.get("routineDraftId").asText();
 
@@ -91,7 +100,7 @@ class RoutineWorkoutFlowIntegrationTest {
                           "order":1,
                           "exerciseId":"barbell_bench_press",
                           "exerciseName":"Barbell Bench Press",
-                          "primaryMuscles":["CHEST_MID_LOWER"],
+                          "primaryMuscles":["CHEST_MID"],
                           "defaultRestSec":120,
                           "exerciseRationale":"demo",
                           "prescription":[{
@@ -164,6 +173,32 @@ class RoutineWorkoutFlowIntegrationTest {
             .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void aiFailureFallbackUsesGoldenStyleEnums() throws Exception {
+        when(securityUtils.getCurrentUserId()).thenReturn("demo-user-001");
+        when(aiClient.generateRoutine(any())).thenThrow(new RuntimeException("timeout"));
+
+        mockMvc.perform(post("/api/routines/generate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "targetSplitLabel":"push",
+                      "targetMuscles":["chest","triceps"],
+                      "readinessLevel":"normal",
+                      "timeAvailableMin":60,
+                      "currentPainAreas":[],
+                      "currentDoms":[],
+                      "unavailableEquipment":[],
+                      "goal":"hypertrophy",
+                      "userNote":"demo"
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.routineBlocks[0].primaryMuscles[0]").value("CHEST_MID"))
+            .andExpect(jsonPath("$.routineBlocks[0].primaryMuscles[1]").value("ARM_TRICEPS"))
+            .andExpect(jsonPath("$.routineBlocks[0].equipmentType").value("BARBELL"));
+    }
+
     private AiRoutineResponse successAiResponse() {
         Prescription prescription = new Prescription();
         prescription.setSetIndex(1);
@@ -177,7 +212,7 @@ class RoutineWorkoutFlowIntegrationTest {
         block.setOrder(1);
         block.setExerciseId("barbell_bench_press");
         block.setExerciseName("Barbell Bench Press");
-        block.setPrimaryMuscles(List.of("CHEST_MID_LOWER"));
+        block.setPrimaryMuscles(List.of("CHEST_MID"));
         block.setDefaultRestSec(120);
         block.setPrescription(List.of(prescription));
         block.setExerciseRationale("demo");
