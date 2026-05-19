@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.math.BigDecimal;
+
 import com.fitcore.api.domain.workout.entity.WorkoutSetEntity;
 
 @Getter
@@ -16,7 +18,7 @@ import com.fitcore.api.domain.workout.entity.WorkoutSetEntity;
 @AllArgsConstructor // Builder 사용을 위해 추가
 public class RecentRecordResponse {
     private String exerciseId;
-    private int defaultWeight;
+    private BigDecimal defaultWeight;
     private int defaultReps;
 
     // Entity -> Response 변환 정적 메서드
@@ -27,8 +29,7 @@ public class RecentRecordResponse {
 
         return RecentRecordResponse.builder()
             .exerciseId(entity.getExerciseId())
-            // BigDecimal을 int로 변환 (소수점 버림)
-            .defaultWeight(entity.getWeightKg() != null ? entity.getWeightKg().intValue() : 0)
+            .defaultWeight(entity.getWeightKg() != null ? entity.getWeightKg() : BigDecimal.ZERO)
             .defaultReps(entity.getReps())
             .build();
     }

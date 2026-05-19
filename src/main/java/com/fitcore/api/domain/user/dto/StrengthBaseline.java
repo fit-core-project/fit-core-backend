@@ -1,5 +1,7 @@
 package com.fitcore.api.domain.user.dto;
 
+import java.math.BigDecimal;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,6 +12,6 @@ import lombok.NoArgsConstructor;
 public class StrengthBaseline {
     private String exerciseId;
     private String exerciseNameSnapshot;
-    private Integer workingWeightKg;
+    private BigDecimal workingWeightKg;
     private Integer reps;
 }

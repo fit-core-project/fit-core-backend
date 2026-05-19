@@ -78,7 +78,7 @@ class RoutineWorkoutFlowIntegrationTest {
         ArgumentCaptor<AiRoutineRequest> aiRequestCaptor = ArgumentCaptor.forClass(AiRoutineRequest.class);
         verify(aiClient).generateRoutine(aiRequestCaptor.capture());
         Assertions.assertThat(aiRequestCaptor.getValue().getTargetMuscles())
-            .containsExactly("CHEST_UPPER", "CHEST_MID", "CHEST_LOWER", "ARM_TRICEPS");
+            .containsExactly("chest", "triceps");
 
         JsonNode generated = objectMapper.readTree(generateResponse);
         String draftId = generated.get("routineDraftId").asText();
@@ -100,7 +100,7 @@ class RoutineWorkoutFlowIntegrationTest {
                           "order":1,
                           "exerciseId":"barbell_bench_press",
                           "exerciseName":"Barbell Bench Press",
-                          "primaryMuscles":["CHEST_MID"],
+                          "primaryMuscles":["chest"],
                           "defaultRestSec":120,
                           "exerciseRationale":"demo",
                           "prescription":[{
@@ -174,7 +174,7 @@ class RoutineWorkoutFlowIntegrationTest {
     }
 
     @Test
-    void aiFailureFallbackUsesGoldenStyleEnums() throws Exception {
+    void aiFailureFallbackUsesSpreadsheetSlugs() throws Exception {
         when(securityUtils.getCurrentUserId()).thenReturn("demo-user-001");
         when(aiClient.generateRoutine(any())).thenThrow(new RuntimeException("timeout"));
 
@@ -194,8 +194,8 @@ class RoutineWorkoutFlowIntegrationTest {
                     }
                     """))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.routineBlocks[0].primaryMuscles[0]").value("CHEST_MID"))
-            .andExpect(jsonPath("$.routineBlocks[0].primaryMuscles[1]").value("ARM_TRICEPS"))
+            .andExpect(jsonPath("$.routineBlocks[0].primaryMuscles[0]").value("chest"))
+            .andExpect(jsonPath("$.routineBlocks[0].primaryMuscles[1]").value("triceps"))
             .andExpect(jsonPath("$.routineBlocks[0].equipmentType").value("BARBELL"));
     }
 
@@ -212,7 +212,7 @@ class RoutineWorkoutFlowIntegrationTest {
         block.setOrder(1);
         block.setExerciseId("barbell_bench_press");
         block.setExerciseName("Barbell Bench Press");
-        block.setPrimaryMuscles(List.of("CHEST_MID"));
+        block.setPrimaryMuscles(List.of("chest"));
         block.setDefaultRestSec(120);
         block.setPrescription(List.of(prescription));
         block.setExerciseRationale("demo");
@@ -230,3 +230,4 @@ class RoutineWorkoutFlowIntegrationTest {
             .build();
     }
 }
+

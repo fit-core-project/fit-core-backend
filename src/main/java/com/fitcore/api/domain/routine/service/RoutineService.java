@@ -138,7 +138,7 @@ public class RoutineService {
         benchPressBlock.setExerciseId("barbell_bench_press");
         benchPressBlock.setExerciseName("Barbell Bench Press");
         benchPressBlock.setMovementPattern("horizontalPush");
-        benchPressBlock.setPrimaryMuscles(Arrays.asList("CHEST_MID", "ARM_TRICEPS"));
+        benchPressBlock.setPrimaryMuscles(Arrays.asList("chest", "triceps"));
         benchPressBlock.setEquipmentType("BARBELL");
         benchPressBlock.setDefaultRestSec(120);
         benchPressBlock.setPrescription(prescriptions);
@@ -165,56 +165,53 @@ public class RoutineService {
             .build();
     }
 
-    // FE UI 근육명 → AI DB enum 키 매핑 (routine_engine.py MUSCLE_REGISTRY 기준 SSOT)
-    private static final Set<String> DB_MUSCLE_ENUMS = Set.of(
-        "ARM_BICEPS",
-        "ARM_FOREARMS",
-        "ARM_TRICEPS",
-        "BACK_LATS",
-        "BACK_LOWER",
-        "BACK_TRAPS",
-        "CHEST_LOWER",
-        "CHEST_MID",
-        "CHEST_UPPER",
-        "CORE_ABS",
-        "CORE_OBLIQUES",
-        "LEG_ABDUCTORS",
-        "LEG_ADDUCTORS",
-        "LEG_CALVES",
-        "LEG_GLUTES",
-        "LEG_HAMSTRINGS",
-        "LEG_QUADS",
-        "ROTATOR_CUFF",
-        "SHOULDER_FRONT",
-        "SHOULDER_LATERAL",
-        "SHOULDER_REAR"
+    // FE UI 근육명 → spreadsheet primary_muscle slug 매핑 (routine_engine.py MUSCLE_REGISTRY 기준 SSOT)
+    private static final Set<String> MUSCLE_SLUGS = Set.of(
+        "abductors",
+        "abs",
+        "adductor",
+        "back-deltoids",
+        "biceps",
+        "calves",
+        "chest",
+        "forearm",
+        "front-deltoids",
+        "gluteal",
+        "hamstring",
+        "lower-back",
+        "neck",
+        "obliques",
+        "quadriceps",
+        "trapezius",
+        "triceps",
+        "upper-back"
     );
 
     private static final Map<String, List<String>> DOMS_MUSCLE_MAP = Map.ofEntries(
-        Map.entry("chest",          List.of("CHEST_UPPER", "CHEST_MID", "CHEST_LOWER")),
-        Map.entry("upper-back",     List.of("BACK_TRAPS")),
-        Map.entry("trapezius",      List.of("BACK_TRAPS")),
-        Map.entry("lats",           List.of("BACK_LATS")),
-        Map.entry("lower-back",     List.of("BACK_LOWER")),
-        Map.entry("front-deltoids", List.of("SHOULDER_FRONT")),
-        Map.entry("back-deltoids",  List.of("SHOULDER_REAR")),
-        Map.entry("deltoids",       List.of("SHOULDER_FRONT", "SHOULDER_REAR", "SHOULDER_LATERAL")),
-        Map.entry("side-deltoids",  List.of("SHOULDER_LATERAL")),
-        Map.entry("rotator-cuff",   List.of("ROTATOR_CUFF")),
-        Map.entry("biceps",         List.of("ARM_BICEPS")),
-        Map.entry("triceps",        List.of("ARM_TRICEPS")),
-        Map.entry("forearm",        List.of("ARM_FOREARMS")),
-        Map.entry("abs",            List.of("CORE_ABS")),
-        Map.entry("obliques",       List.of("CORE_OBLIQUES")),
-        Map.entry("glutes",         List.of("LEG_GLUTES")),
-        Map.entry("gluteal",        List.of("LEG_GLUTES")),
-        Map.entry("hamstring",      List.of("LEG_HAMSTRINGS")),
-        Map.entry("quadriceps",     List.of("LEG_QUADS")),
-        Map.entry("calves",         List.of("LEG_CALVES")),
-        Map.entry("adductor",       List.of("LEG_ADDUCTORS")),
-        Map.entry("adductors",      List.of("LEG_ADDUCTORS")),
-        Map.entry("abductors",      List.of("LEG_ABDUCTORS")),
-        Map.entry("knees",          List.of("LEG_QUADS", "LEG_HAMSTRINGS"))
+        Map.entry("chest",          List.of("chest")),
+        Map.entry("upper-back",     List.of("upper-back")),
+        Map.entry("trapezius",      List.of("trapezius")),
+        Map.entry("lats",           List.of("upper-back")),
+        Map.entry("lower-back",     List.of("lower-back")),
+        Map.entry("front-deltoids", List.of("front-deltoids")),
+        Map.entry("back-deltoids",  List.of("back-deltoids")),
+        Map.entry("deltoids",       List.of("front-deltoids", "back-deltoids")),
+        Map.entry("rotator-cuff",   List.of("trapezius")),
+        Map.entry("biceps",         List.of("biceps")),
+        Map.entry("triceps",        List.of("triceps")),
+        Map.entry("forearm",        List.of("forearm")),
+        Map.entry("abs",            List.of("abs")),
+        Map.entry("obliques",       List.of("obliques")),
+        Map.entry("glutes",         List.of("gluteal")),
+        Map.entry("gluteal",        List.of("gluteal")),
+        Map.entry("hamstring",      List.of("hamstring")),
+        Map.entry("quadriceps",     List.of("quadriceps")),
+        Map.entry("calves",         List.of("calves")),
+        Map.entry("adductor",       List.of("adductor")),
+        Map.entry("adductors",      List.of("adductor")),
+        Map.entry("abductors",      List.of("abductors")),
+        Map.entry("knees",          List.of("quadriceps", "hamstring")),
+        Map.entry("neck",           List.of("neck"))
     );
 
     private Map<String, Integer> convertDomsToMap(List<Doms> doms) {
@@ -259,8 +256,8 @@ public class RoutineService {
     }
 
     private String normalizeDbMuscleEnum(String value) {
-        String upper = value.toUpperCase();
-        return DB_MUSCLE_ENUMS.contains(upper) ? upper : value;
+        String slug = value.trim();
+        return MUSCLE_SLUGS.contains(slug) ? slug : value;
     }
 
     // 2. 루틴 확정 (Request -> Entity -> Response)
@@ -317,3 +314,4 @@ public class RoutineService {
         return RoutineFinalResponse.fromEntity(finalEntity);
     }
 }
+

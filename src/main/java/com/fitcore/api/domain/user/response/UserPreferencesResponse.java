@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +27,7 @@ public class UserPreferencesResponse {
     private List<String> equipment;
     private int weeklyFrequency;
     private SplitType splitPreference;
-    private Map<String, Integer> baselineWeights;
+    private Map<String, BigDecimal> baselineWeights;
 
     public UserPreferencesResponse(UserProfileEntity entity) {
         this.timeAvailable = entity.getTimeAvailable() != null ? entity.getTimeAvailable() : 60;
@@ -40,7 +41,7 @@ public class UserPreferencesResponse {
             .filter(base -> base.getExerciseNameSnapshot() != null)
             .collect(Collectors.toMap(
                 StrengthBaseline::getExerciseNameSnapshot,
-                base -> base.getWorkingWeightKg() != null ? base.getWorkingWeightKg() : 0,
+                base -> base.getWorkingWeightKg() != null ? base.getWorkingWeightKg() : BigDecimal.ZERO,
                 (existing, replacement) -> existing
             ));
     }
