@@ -11,18 +11,19 @@ public class SecurityUtils {
     public String getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        // 인증되지 않았거나 익명 사용자인 경우 예외 처리
         if (authentication == null || !authentication.isAuthenticated()
             || "anonymousUser".equals(authentication.getPrincipal())) {
-            throw new IllegalStateException("인증 정보가 없습니다.");
+            throw new IllegalStateException("Authentication is missing.");
         }
 
-        // 인증 객체에서 PrincipalDetails 추출
         Object principal = authentication.getPrincipal();
         if (principal instanceof PrincipalDetails details) {
             return details.getUser().getUserId();
         }
+        if (principal instanceof String userId && !"anonymousUser".equals(userId)) {
+            return userId;
+        }
 
-        throw new IllegalStateException("인증 객체에서 유저 정보를 찾을 수 없습니다.");
+        throw new IllegalStateException("Unsupported authentication principal.");
     }
 }
