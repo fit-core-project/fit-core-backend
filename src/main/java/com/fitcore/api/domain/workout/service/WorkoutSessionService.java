@@ -30,6 +30,7 @@ import com.fitcore.api.domain.workout.response.PrResponse;
 import com.fitcore.api.domain.workout.response.WorkoutSessionResponse;
 import com.fitcore.api.domain.routine.entity.RoutineFinalEntity;
 import com.fitcore.api.domain.routine.repository.RoutineFinalRepository;
+import com.fitcore.api.domain.workout.util.OneRmCalculator;
 import com.fitcore.api.global.common.util.SecurityUtils;
 import com.fitcore.api.global.error.ErrorCode;
 import com.fitcore.api.global.error.exception.BusinessException;
@@ -147,7 +148,7 @@ public class WorkoutSessionService {
 
         Map<String, PrResponse> bestByExercise = new LinkedHashMap<>();
         for (WorkoutSetEntity set : sets) {
-            double estimated1RM = set.getWeightKg().doubleValue() * (1.0 + set.getReps() / 30.0);
+            double estimated1RM = OneRmCalculator.estimate(set.getWeightKg().doubleValue(), set.getReps());
             PrResponse existing = bestByExercise.get(set.getExerciseId());
             if (existing == null || estimated1RM > existing.getEstimated1RM().doubleValue()) {
                 bestByExercise.put(set.getExerciseId(), PrResponse.builder()

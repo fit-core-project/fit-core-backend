@@ -8,11 +8,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
@@ -24,6 +21,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fitcore.api.domain.routine.dto.Doms;
 import com.fitcore.api.domain.routine.dto.Prescription;
+import com.fitcore.api.domain.routine.util.MuscleMapper;
 import com.fitcore.api.domain.routine.dto.RoutineBlock;
 import com.fitcore.api.domain.routine.entity.RoutineDraftEntity;
 import com.fitcore.api.domain.routine.entity.RoutineFinalEntity;
@@ -177,99 +175,12 @@ public class RoutineService {
             .build();
     }
 
-    // FE UI 근육명 → spreadsheet primary_muscle slug 매핑 (routine_engine.py MUSCLE_REGISTRY 기준 SSOT)
-    private static final Set<String> MUSCLE_SLUGS = Set.of(
-        "abductors",
-        "abs",
-        "adductor",
-        "back-deltoids",
-        "biceps",
-        "calves",
-        "chest",
-        "forearm",
-        "front-deltoids",
-        "gluteal",
-        "hamstring",
-        "lower-back",
-        "neck",
-        "obliques",
-        "quadriceps",
-        "trapezius",
-        "triceps",
-        "upper-back"
-    );
-
-    private static final Map<String, List<String>> DOMS_MUSCLE_MAP = Map.ofEntries(
-        Map.entry("chest",          List.of("chest")),
-        Map.entry("upper-back",     List.of("upper-back")),
-        Map.entry("trapezius",      List.of("trapezius")),
-        Map.entry("lats",           List.of("upper-back")),
-        Map.entry("lower-back",     List.of("lower-back")),
-        Map.entry("front-deltoids", List.of("front-deltoids")),
-        Map.entry("back-deltoids",  List.of("back-deltoids")),
-        Map.entry("deltoids",       List.of("front-deltoids", "back-deltoids")),
-        Map.entry("rotator-cuff",   List.of("trapezius")),
-        Map.entry("biceps",         List.of("biceps")),
-        Map.entry("triceps",        List.of("triceps")),
-        Map.entry("forearm",        List.of("forearm")),
-        Map.entry("abs",            List.of("abs")),
-        Map.entry("obliques",       List.of("obliques")),
-        Map.entry("glutes",         List.of("gluteal")),
-        Map.entry("gluteal",        List.of("gluteal")),
-        Map.entry("hamstring",      List.of("hamstring")),
-        Map.entry("quadriceps",     List.of("quadriceps")),
-        Map.entry("calves",         List.of("calves")),
-        Map.entry("adductor",       List.of("adductor")),
-        Map.entry("adductors",      List.of("adductor")),
-        Map.entry("abductors",      List.of("abductors")),
-        Map.entry("knees",          List.of("quadriceps", "hamstring")),
-        Map.entry("neck",           List.of("neck"))
-    );
-
     private Map<String, Integer> convertDomsToMap(List<Doms> doms) {
-        if (doms == null || doms.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        Map<String, Integer> result = new HashMap<>();
-        for (Doms d : doms) {
-            if (d.getBodyPart() == null || d.getLevel() == null) continue;
-            int levelInt = mapLevelToInt(d.getLevel());
-            List<String> dbKeys = DOMS_MUSCLE_MAP.getOrDefault(
-                d.getBodyPart().toLowerCase(), List.of(normalizeDbMuscleEnum(d.getBodyPart()))
-            );
-            for (String dbKey : dbKeys) {
-                result.merge(dbKey, levelInt, Math::max);
-            }
-        }
-        return result;
-    }
-
-    private Integer mapLevelToInt(String level) {
-        return switch (level.toLowerCase()) {
-            case "mild" -> 1;
-            case "moderate" -> 2;
-            case "severe" -> 3;
-            default -> 1;
-        };
+        return MuscleMapper.convertDomsToMap(doms);
     }
 
     private List<String> normalizeTargetMuscles(List<String> targetMuscles) {
-        if (targetMuscles == null || targetMuscles.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return targetMuscles.stream()
-            .filter(muscle -> muscle != null && !muscle.isBlank())
-            .flatMap(muscle -> DOMS_MUSCLE_MAP.getOrDefault(
-                muscle.toLowerCase(),
-                List.of(normalizeDbMuscleEnum(muscle))
-            ).stream())
-            .distinct()
-            .toList();
-    }
-
-    private String normalizeDbMuscleEnum(String value) {
-        String slug = value.trim();
-        return MUSCLE_SLUGS.contains(slug) ? slug : value;
+        return MuscleMapper.normalizeTargetMuscles(targetMuscles);
     }
 
     // 2. 루틴 확정 (Request -> Entity -> Response)
