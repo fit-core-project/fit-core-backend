@@ -6,6 +6,10 @@ import lombok.RequiredArgsConstructor;
 
 import jakarta.validation.Valid;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,6 +43,13 @@ public class RoutineController {
     public ResponseEntity<RoutineFinalResponse> finalizeRoutine(
         @PathVariable String routineDraftId, @Valid @RequestBody RoutineFinalRequest routineFinalRequest) {
         return ResponseEntity.ok(routineService.finalizeRoutine(routineDraftId, routineFinalRequest));
+    }
+
+    @Operation(summary = "내 확정 루틴 목록 조회", description = "로그인한 사용자의 확정 루틴 목록을 최신순으로 조회합니다.")
+    @GetMapping("/finals")
+    public ResponseEntity<Page<RoutineFinalResponse>> getMyFinalRoutines(
+        @PageableDefault(size = 20, sort = "savedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(routineService.getMyFinalRoutines(pageable));
     }
 
     @Operation(summary = "확정 루틴 상세 조회", description = "특정 확정된 루틴(Final)의 상세 정보를 조회합니다.")

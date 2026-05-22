@@ -3,17 +3,30 @@ package com.fitcore.api.domain.workout.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fitcore.api.domain.user.components.UserComponent;
+import com.fitcore.api.domain.user.entity.UserProfileEntity;
 import com.fitcore.api.domain.workout.entity.WorkoutSessionEntity;
 import com.fitcore.api.domain.workout.entity.WorkoutSetEntity;
 import com.fitcore.api.domain.workout.repository.WorkoutSessionRepository;
+import com.fitcore.api.domain.workout.repository.WorkoutSetRepository;
 import com.fitcore.api.domain.workout.request.WorkoutSessionRequest;
+import com.fitcore.api.domain.workout.response.AttendanceWeekResponse;
+import com.fitcore.api.domain.workout.response.PrResponse;
 import com.fitcore.api.domain.workout.response.WorkoutSessionResponse;
 import com.fitcore.api.domain.routine.entity.RoutineFinalEntity;
 import com.fitcore.api.domain.routine.repository.RoutineFinalRepository;
@@ -28,7 +41,9 @@ import com.fitcore.api.global.error.exception.BusinessException;
 public class WorkoutSessionService {
     private final SecurityUtils securityUtils;
     private final WorkoutSessionRepository sessionRepository;
+    private final WorkoutSetRepository workoutSetRepository;
     private final RoutineFinalRepository routineFinalRepository;
+    private final UserComponent userComponent;
 
     /**
      * 운동 세션 및 세트 생성
@@ -124,5 +139,61 @@ public class WorkoutSessionService {
             throw new IllegalArgumentException("Session not found");
         }
         sessionRepository.deleteById(sessionId);
+    }
+
+    public List<PrResponse> getPrs() {
+        String userId = securityUtils.getCurrentUserId();
+        List<WorkoutSetEntity> sets = workoutSetRepository.findWorkingSetsWithWeightByUser(userId);
+
+        Map<String, PrResponse> bestByExercise = new LinkedHashMap<>();
+        for (WorkoutSetEntity set : sets) {
+            double estimated1RM = set.getWeightKg().doubleValue() * (1.0 + set.getReps() / 30.0);
+            PrResponse existing = bestByExercise.get(set.getExerciseId());
+            if (existing == null || estimated1RM > existing.getEstimated1RM().doubleValue()) {
+                bestByExercise.put(set.getExerciseId(), PrResponse.builder()
+                    .exerciseId(set.getExerciseId())
+                    .exerciseNameSnapshot(set.getExerciseNameSnapshot())
+                    .estimated1RM(BigDecimal.valueOf(estimated1RM).setScale(1, RoundingMode.HALF_UP))
+                    .weightKg(set.getWeightKg())
+                    .reps(set.getReps())
+                    .achievedDate(set.getWorkoutSession().getWorkoutDate())
+                    .build());
+            }
+        }
+
+        return bestByExercise.values().stream()
+            .sorted(Comparator.comparingDouble(r -> -r.getEstimated1RM().doubleValue()))
+            .toList();
+    }
+
+    public List<AttendanceWeekResponse> getAttendance() {
+        String userId = securityUtils.getCurrentUserId();
+        LocalDate thisMonday = LocalDate.now().with(DayOfWeek.MONDAY);
+        LocalDate since = thisMonday.minusWeeks(3);
+
+        List<LocalDate> workoutDates = sessionRepository.findDistinctWorkoutDatesSince(userId, since);
+        Integer targetDays = userComponent.findById()
+            .map(UserProfileEntity::getTrainingDaysPerWeek)
+            .orElse(null);
+
+        List<AttendanceWeekResponse> result = new ArrayList<>();
+        for (int i = 3; i >= 0; i--) {
+            LocalDate weekStart = thisMonday.minusWeeks(i);
+            LocalDate weekEnd = weekStart.plusDays(6);
+            int actualDays = (int) workoutDates.stream()
+                .filter(d -> !d.isBefore(weekStart) && !d.isAfter(weekEnd))
+                .count();
+            Double rate = (targetDays != null && targetDays > 0)
+                ? (double) actualDays / targetDays
+                : null;
+            result.add(AttendanceWeekResponse.builder()
+                .weekStart(weekStart)
+                .weekEnd(weekEnd)
+                .actualDays(actualDays)
+                .targetDays(targetDays)
+                .rate(rate)
+                .build());
+        }
+        return result;
     }
 }

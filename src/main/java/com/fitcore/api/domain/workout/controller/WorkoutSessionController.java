@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -18,6 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 
 import com.fitcore.api.domain.workout.request.WorkoutSessionRequest;
+import com.fitcore.api.domain.workout.response.AttendanceWeekResponse;
+import com.fitcore.api.domain.workout.response.PrResponse;
 import com.fitcore.api.domain.workout.response.WorkoutSessionResponse;
 import com.fitcore.api.domain.workout.service.WorkoutSessionService;
 
@@ -46,5 +50,17 @@ public class WorkoutSessionController {
     @Operation(summary = "운동 세션 생성", description = "새로운 운동 세션 기록을 생성하고 저장합니다.")
     public ResponseEntity<WorkoutSessionResponse> createWorkout(@Valid @RequestBody WorkoutSessionRequest request) {
         return ResponseEntity.ok(workoutSessionService.createWorkoutSession(request));
+    }
+
+    @GetMapping("/prs")
+    @Operation(summary = "개인 기록 조회", description = "종목별 추정 1RM 최고 기록을 조회합니다.")
+    public ResponseEntity<List<PrResponse>> getPersonalRecords() {
+        return ResponseEntity.ok(workoutSessionService.getPrs());
+    }
+
+    @GetMapping("/attendance")
+    @Operation(summary = "출석률 조회", description = "최근 4주 출석률을 조회합니다.")
+    public ResponseEntity<List<AttendanceWeekResponse>> getAttendance() {
+        return ResponseEntity.ok(workoutSessionService.getAttendance());
     }
 }

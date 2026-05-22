@@ -28,4 +28,6 @@ public class AiRoutineRequest {
     private List<String> equipment = Collections.emptyList();
     private String goal;
     private String userNote;
+    private List<String> preferredExerciseIds = Collections.emptyList();
+    private List<String> unpreferredExerciseIds = Collections.emptyList();
 }

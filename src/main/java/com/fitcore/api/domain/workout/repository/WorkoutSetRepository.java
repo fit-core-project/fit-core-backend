@@ -1,5 +1,6 @@
 package com.fitcore.api.domain.workout.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,4 +19,9 @@ public interface WorkoutSetRepository extends JpaRepository<WorkoutSetEntity, St
         @Param("userId") String userId,
         @Param("exerciseId") String exerciseId
     );
+
+    @Query("SELECT ws FROM WorkoutSetEntity ws JOIN FETCH ws.workoutSession s " +
+           "WHERE s.userId = :userId AND ws.setType = 'working' " +
+           "AND ws.weightKg IS NOT NULL AND ws.reps > 0")
+    List<WorkoutSetEntity> findWorkingSetsWithWeightByUser(@Param("userId") String userId);
 }

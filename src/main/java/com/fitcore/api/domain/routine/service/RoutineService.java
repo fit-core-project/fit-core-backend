@@ -29,6 +29,7 @@ import com.fitcore.api.domain.routine.entity.RoutineDraftEntity;
 import com.fitcore.api.domain.routine.entity.RoutineFinalEntity;
 import com.fitcore.api.domain.routine.repository.RoutineDraftRepository;
 import com.fitcore.api.domain.routine.repository.RoutineFinalRepository;
+import com.fitcore.api.domain.user.components.UserComponent;
 import com.fitcore.api.domain.routine.request.RoutineFinalRequest;
 import com.fitcore.api.domain.routine.request.RoutineGenerateRequest;
 import com.fitcore.api.domain.routine.response.RoutineDraftResponse;
@@ -52,6 +53,7 @@ public class RoutineService {
     private final SecurityUtils securityUtils;
     private final ObjectMapper objectMapper;
     private final AiClient aiClient;
+    private final UserComponent userComponent;
 
     @Transactional
     public RoutineDraftResponse generateRoutine(RoutineGenerateRequest request) {
@@ -148,6 +150,14 @@ public class RoutineService {
     }
 
     private AiRoutineRequest mapToAiRequest(RoutineGenerateRequest request) {
+        var profile = userComponent.findById();
+        List<String> preferred = profile
+            .map(p -> p.getPreferredExerciseIds() != null ? p.getPreferredExerciseIds() : Collections.<String>emptyList())
+            .orElse(Collections.emptyList());
+        List<String> unpreferred = profile
+            .map(p -> p.getUnpreferredExerciseIds() != null ? p.getUnpreferredExerciseIds() : Collections.<String>emptyList())
+            .orElse(Collections.emptyList());
+
         return AiRoutineRequest.builder()
             .userId(securityUtils.getCurrentUserId())
             .targetSplitLabel(request.getTargetSplitLabel())
@@ -159,9 +169,11 @@ public class RoutineService {
                     .map(area -> Map.of("bodyPart", area))
                     .toList())
             .domsData(convertDomsToMap(request.getCurrentDoms()))
-            .equipment(request.getUnavailableEquipment()) // 예시: 전체 장비 리스트 등에서 제외하여 매핑
+            .equipment(request.getUnavailableEquipment())
             .goal(request.getGoal())
             .userNote(request.getUserNote())
+            .preferredExerciseIds(preferred)
+            .unpreferredExerciseIds(unpreferred)
             .build();
     }
 
