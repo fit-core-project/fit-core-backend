@@ -8,6 +8,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.stream.Collectors;
+
 import com.fitcore.api.global.common.response.ErrorResponse;
 import com.fitcore.api.global.error.exception.BusinessException;
 
@@ -29,7 +31,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     protected ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException e) {
         log.error("ValidationException: {}", e.getMessage());
-        ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_INPUT_VALUE);
+        String message = e.getBindingResult().getFieldErrors().stream()
+            .map(error -> error.getField() + ": " + error.getDefaultMessage())
+            .distinct()
+            .collect(Collectors.joining(", "));
+        ErrorResponse response = ErrorResponse.of(
+            ErrorCode.INVALID_INPUT_VALUE,
+            message.isBlank() ? ErrorCode.INVALID_INPUT_VALUE.getMessage() : message
+        );
         return ResponseEntity.badRequest().body(response);
     }
 

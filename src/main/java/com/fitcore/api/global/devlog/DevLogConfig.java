@@ -5,10 +5,12 @@ import lombok.RequiredArgsConstructor;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 
+@Profile("!prod")
 @Configuration
 @RequiredArgsConstructor
 public class DevLogConfig {

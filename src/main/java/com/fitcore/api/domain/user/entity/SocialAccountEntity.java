@@ -38,7 +38,7 @@ public class SocialAccountEntity extends BaseTimeEntity {
     private String id;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "user_id", columnDefinition = "BINARY(36)", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private UserProfileEntity user;
 
     @Column(nullable = false)

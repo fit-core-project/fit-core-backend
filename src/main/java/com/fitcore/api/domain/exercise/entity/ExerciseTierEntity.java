@@ -51,4 +51,28 @@ public class ExerciseTierEntity {
 
     @Column(name = "movement_type", columnDefinition = "TEXT")
     private String movementType;
+
+    @Column(name = "substitute_exercise_ids", columnDefinition = "TEXT")
+    private String substituteExerciseIds;
+
+    public void update(
+        String nameKr, String nameEn,
+        String primaryMuscle, String secondaryMuscle,
+        String equipmentReq, Long difficultyTier, Long efficiencyTier,
+        String painTriggers, String movementType, String substituteExerciseIds) {
+        this.nameKr = nameKr;
+        this.nameEn = nameEn;
+        this.primaryMuscle = primaryMuscle;
+        this.secondaryMuscle = secondaryMuscle;
+        this.equipmentReq = equipmentReq;
+        this.difficultyTier = difficultyTier;
+        this.efficiencyTier = efficiencyTier;
+        this.painTriggers = painTriggers;
+        this.movementType = movementType;
+        this.substituteExerciseIds = substituteExerciseIds;
+    }
+
+    public void setSubstituteExerciseIds(String substituteExerciseIds) {
+        this.substituteExerciseIds = substituteExerciseIds;
+    }
 }

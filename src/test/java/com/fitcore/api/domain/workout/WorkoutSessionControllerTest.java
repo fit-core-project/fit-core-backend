@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -128,5 +130,45 @@ class WorkoutSessionControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].actualDays").value(0))
             .andExpect(jsonPath("$[0].rate").value(0.0));
+    }
+
+    @Test
+    void createWorkout_invalidNumericFields_returns400WithMessages() throws Exception {
+        mockMvc.perform(post("/api/workouts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "workoutDate": "2026-05-26",
+                      "sets": [
+                        {
+                          "exerciseOrder": 1,
+                          "exerciseId": "30",
+                          "exerciseNameSnapshot": "Barbell Bench Press",
+                          "setIndex": 1,
+                          "trackingMode": "weightReps",
+                          "weightKg": 0,
+                          "reps": 0,
+                          "restSec": -1
+                        },
+                        {
+                          "exerciseOrder": 2,
+                          "exerciseId": "98",
+                          "exerciseNameSnapshot": "Back Squat",
+                          "setIndex": 1,
+                          "trackingMode": "weightReps",
+                          "weightKg": 500.1,
+                          "reps": 51,
+                          "restSec": 601
+                        }
+                      ]
+                    }
+                    """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("weightKg must be greater than 0 kg")))
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("weightKg must be less than or equal to 500 kg")))
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("reps must be greater than or equal to 1")))
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("reps must be less than or equal to 50")))
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("restSec must be greater than or equal to 0 sec")))
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("restSec must be less than or equal to 600 sec")));
     }
 }

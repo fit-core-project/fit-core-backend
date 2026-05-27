@@ -43,6 +43,7 @@ public class SecurityConfig {
 
             // 경로별 권한 설정
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/v1/auth/set-link-mode").authenticated()
                 .requestMatchers("/",
                     "/api/dev/logs",

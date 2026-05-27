@@ -126,11 +126,9 @@ public class UserProfileEntity extends BaseDeleteEntity {
     @Column(name = "body_composition_snapshot", columnDefinition = "JSON")
     private List<BodyComposition> bodyCompositionSnapshot;
 
-//    @ElementCollection(fetch = FetchType.EAGER)
-//    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
-//    @Column(name = "role_name")
-//    @Enumerated(EnumType.STRING) // Enum 문자열 저장을 위해 필수 추가
-//    private Set<UserRole> roles = new HashSet<>();
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", length = 20)
+    private UserRole role = UserRole.ROLE_USER;
 
     @Builder
     public UserProfileEntity(
@@ -143,7 +141,7 @@ public class UserProfileEntity extends BaseDeleteEntity {
         this.gender = gender;
         this.birthDate = birthDate;
         this.status = (status != null) ? status : UserStatus.ACTIVE;
-//        this.roles = (roles != null) ? roles : new HashSet<>(Collections.singleton(UserRole.ROLE_USER));
+        this.role = UserRole.ROLE_USER;
     }
 
     public void updateProfile(UserProfileUpdateRequest request) {

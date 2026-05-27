@@ -48,10 +48,9 @@ public class PrincipalDetails implements UserDetails, OAuth2User {
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-//        return user.getRoles().stream()
-//            .map(role -> new SimpleGrantedAuthority(role.name())) // Enum의 이름(예: "ROLE_USER")을 String으로 추출
-//            .collect(Collectors.toList());
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+        var role = user.getRole();
+        String authority = (role != null) ? role.name() : "ROLE_USER";
+        return Collections.singletonList(new SimpleGrantedAuthority(authority));
     }
 
     @Override

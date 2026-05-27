@@ -73,6 +73,42 @@ class UserProfileControllerTest {
     }
 
     @Test
+    void updateMyProfile_invalidNumericFields_returns400WithMessages() throws Exception {
+        mockMvc.perform(put("/api/profile/me")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "bodyWeightKg": 19,
+                      "bodyFatPct": 61,
+                      "strengthBaseline": [
+                        {
+                          "exerciseId": "30",
+                          "exerciseNameSnapshot": "Barbell Bench Press",
+                          "workingWeightKg": 501,
+                          "reps": 0
+                        }
+                      ],
+                      "bodyCompositionSnapshot": [
+                        {
+                          "measuredAt": "2026-05-26",
+                          "bodyWeightKg": 301,
+                          "skeletalMuscleMassKg": 4,
+                          "bodyFatPct": 0
+                        }
+                      ]
+                    }
+                    """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("bodyWeightKg must be greater than or equal to 20 kg")))
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("bodyWeightKg must be less than or equal to 300 kg")))
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("bodyFatPct must be less than or equal to 60%")))
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("workingWeightKg must be less than or equal to 500 kg")))
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("reps must be greater than or equal to 1")))
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("skeletalMuscleMassKg must be greater than or equal to 5 kg")))
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("bodyFatPct must be greater than or equal to 1%")));
+    }
+
+    @Test
     void checkNicknameDuplicate_existingNickname_returnsTrue() throws Exception {
         when(userService.checkNicknameDuplicate("테스터")).thenReturn(true);
 

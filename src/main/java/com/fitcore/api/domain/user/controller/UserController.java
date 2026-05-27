@@ -17,6 +17,7 @@ import com.fitcore.api.domain.user.response.UserConditionResponse;
 import com.fitcore.api.domain.user.response.UserPreferencesResponse;
 import com.fitcore.api.domain.user.response.UserProfileResponse;
 import com.fitcore.api.domain.user.service.UserService;
+import jakarta.validation.Valid;
 
 @RequestMapping("/api")
 @RestController
@@ -47,7 +48,7 @@ public class UserController {
     @Operation(summary = "내 프로필 수정", description = "로그인된 유저의 정보를 수정합니다.")
     @PutMapping("/profile/me")
     public ResponseEntity<UserProfileResponse> updateMyProfile(
-        @RequestBody UserProfileUpdateRequest userProfileUpdateRequest) {
+        @Valid @RequestBody UserProfileUpdateRequest userProfileUpdateRequest) {
         UserProfileResponse user = userService.updateMyProfile(userProfileUpdateRequest);
         return ResponseEntity.ok(user);
     }

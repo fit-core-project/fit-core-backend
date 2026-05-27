@@ -1,3 +1,7 @@
+-- [SUPERSEDED] 이 파일은 Flyway 도입으로 더 이상 사용되지 않습니다.
+-- 현재 스키마 정의는 db/migration/V1__init_schema.sql 을 참조하세요.
+-- spring.sql.init.mode=never 로 비활성화된 상태입니다.
+
 -- 1. 부모 테이블: 유저 프로필
 CREATE TABLE IF NOT EXISTS `user_profiles` (
      `user_id` char(36) NOT NULL COMMENT 'PK',

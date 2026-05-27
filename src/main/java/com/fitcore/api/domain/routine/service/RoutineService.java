@@ -3,22 +3,25 @@ package com.fitcore.api.domain.routine.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.ResourceAccessException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fitcore.api.domain.exercise.entity.ExerciseTierEntity;
+import com.fitcore.api.domain.exercise.repository.ExerciseTierRepository;
 import com.fitcore.api.domain.routine.dto.Doms;
 import com.fitcore.api.domain.routine.dto.Prescription;
 import com.fitcore.api.domain.routine.util.MuscleMapper;
@@ -52,6 +55,7 @@ public class RoutineService {
     private final ObjectMapper objectMapper;
     private final AiClient aiClient;
     private final UserComponent userComponent;
+    private final ExerciseTierRepository exerciseTierRepository;
 
     @Transactional
     public RoutineDraftResponse generateRoutine(RoutineGenerateRequest request) {
@@ -81,70 +85,266 @@ public class RoutineService {
             return RoutineDraftResponse.fromEntity(routineDraftRepository.save(successEntity));
         } catch (Exception e) {
             log.error(e.toString());
+            StatusReasonCode reasonCode = resolveFallbackReasonCode(e);
+            AiRoutineResponse fallbackResponse = createAiFailResponse(request, reasonCode);
             RoutineDraftEntity aiFailEntity = RoutineDraftEntity.builder()
                 .userId(securityUtils.getCurrentUserId())
                 .generationStatus(GenerationStatus.fallback)
-                .statusReasonCode(StatusReasonCode.llmTimeout)
+                .statusReasonCode(reasonCode)
                 .targetSplitLabel(request.getTargetSplitLabel() != null && !request.getTargetSplitLabel().isBlank() ? request.getTargetSplitLabel() : "custom")
                 .isFallback(true)
                 .requestPayloadSnapshot(objectMapper.convertValue(request, new TypeReference<>() {
                 }))
                 .responsePayloadSnapshot(
-                    objectMapper.convertValue(createAiFailResponse(), new TypeReference<>() { // 디폴트 루틴
+                    objectMapper.convertValue(fallbackResponse, new TypeReference<>() { // fallback routine
                     }))
                 .adapterRequestSnapshot(objectMapper.convertValue(aiRequest, new TypeReference<>() {
                 }))
-                .rationaleSummary(List.of("LLM 응답이 제한 시간 안에 오지 않아 규칙 기반 기본 루틴으로 전환했다.")) // 디폴트
+                .rationaleSummary(fallbackResponse.getRationaleSummary())
                 .build();
 
             return RoutineDraftResponse.fromEntity(routineDraftRepository.save(aiFailEntity));
         }
     }
 
-    private AiRoutineResponse createAiFailResponse() {
-        List<Prescription> prescriptions = new ArrayList<>();
 
-        for (int i = 1; i <= 2; i++) {
-            Prescription p = new Prescription();
-            p.setSetIndex(i);
-            p.setSetType("working");
-            p.setTargetReps(5);
-            p.setTargetWeightKg(BigDecimal.valueOf(75));
-            p.setTargetRir(2);
-            p.setTargetRestSec(120);
-            prescriptions.add(p);
+    private StatusReasonCode resolveFallbackReasonCode(Exception e) {
+        String message = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
+        if (e instanceof ResourceAccessException || message.contains("timeout") || message.contains("timed out")) {
+            return StatusReasonCode.llmTimeout;
         }
+        if (message.contains("schema")
+            || message.contains("parse")
+            || message.contains("deserialize")
+            || message.contains("json")
+            || message.contains("422")) {
+            return StatusReasonCode.schemaError;
+        }
+        return StatusReasonCode.networkError;
+    }
 
-        // 2. RoutineBlock 생성 및 값 설정
-        RoutineBlock benchPressBlock = getRoutineBlock(prescriptions);
-
-        // 3. 최종 응답 객체 생성 (AiRoutineResponse의 구조에 따라 적절히 반환)
-        List<RoutineBlock> blocks = new ArrayList<>();
-        blocks.add(benchPressBlock);
+    private AiRoutineResponse createAiFailResponse(RoutineGenerateRequest request, StatusReasonCode reasonCode) {
+        List<RoutineBlock> blocks = buildRequestAwareFallbackBlocks(request, reasonCode);
 
         AiRoutineResponse response = new AiRoutineResponse();
+        response.setGenerationStatus(GenerationStatus.fallback);
+        response.setStatusReasonCode(reasonCode);
+        response.setIsFallback(true);
         response.setRoutineBlocks(blocks);
-        response.setSummaryTitle("대체 루틴");
-        response.setRationaleSummary(List.of("AI 서버 연결이 지연되어 규칙 기반 기본 루틴으로 전환했습니다."));
-        response.setWarnings(List.of("AI 서버 연결이 지연되어 기본 루틴을 제공합니다."));
-        response.setTotalEstimatedTime(60);
-
+        response.setSummaryTitle("안전 대체 루틴");
+        response.setRationaleSummary(List.of("AI 서버 응답을 사용할 수 없어 요청한 부위와 제한 조건을 반영한 최소 안전 루틴으로 대체했습니다."));
+        response.setWarnings(List.of("통증이 있거나 불편하면 즉시 중단하고 프로필의 부상 부위를 확인하세요."));
+        response.setTotalEstimatedTime(estimateFallbackTime(blocks));
         return response;
     }
 
-    private static @NonNull RoutineBlock getRoutineBlock(List<Prescription> prescriptions) {
-        RoutineBlock benchPressBlock = new RoutineBlock();
-        benchPressBlock.setOrder(1);
-        benchPressBlock.setExerciseId("barbell_bench_press");
-        benchPressBlock.setExerciseName("Barbell Bench Press");
-        benchPressBlock.setMovementPattern("horizontalPush");
-        benchPressBlock.setPrimaryMuscles(Arrays.asList("chest", "triceps"));
-        benchPressBlock.setEquipmentType("BARBELL");
-        benchPressBlock.setDefaultRestSec(120);
-        benchPressBlock.setPrescription(prescriptions);
-        benchPressBlock.setExerciseRationale("최근 수행 성공 기록을 기준으로 마지막 확인 중량 유지");
-        benchPressBlock.setSubstitutionCandidates(new ArrayList<>());
-        return benchPressBlock;
+    private List<RoutineBlock> buildRequestAwareFallbackBlocks(RoutineGenerateRequest request, StatusReasonCode reasonCode) {
+        List<RoutineBlock> catalogBlocks = buildCatalogFallbackBlocks(request, reasonCode);
+        if (!catalogBlocks.isEmpty()) {
+            return catalogBlocks;
+        }
+
+        Map<String, FallbackExercise> templates = new LinkedHashMap<>();
+        templates.put("push", new FallbackExercise(
+            "47", "Push-up", "horizontalPush", List.of("chest", "triceps"), "BODYWEIGHT", 3, 10, 90));
+        templates.put("pull", new FallbackExercise(
+            "65", "Inverted Row", "horizontalPull", List.of("upper-back", "biceps"), "BODYWEIGHT", 3, 10, 90));
+        templates.put("legs", new FallbackExercise(
+            "118", "Bodyweight Squat", "squat", List.of("quadriceps", "gluteal"), "BODYWEIGHT", 3, 12, 75));
+        templates.put("core", new FallbackExercise(
+            "120", "Plank", "antiExtension", List.of("abs"), "BODYWEIGHT", 3, 30, 60));
+
+        List<FallbackExercise> selected = new ArrayList<>();
+        String split = request.getTargetSplitLabel() == null ? "" : request.getTargetSplitLabel().trim().toLowerCase();
+        if (templates.containsKey(split)) {
+            selected.add(templates.get(split));
+        } else if (request.getTargetMuscles() != null && !request.getTargetMuscles().isEmpty()) {
+            selected.addAll(templates.values().stream()
+                .filter(ex -> ex.primaryMuscles().stream().anyMatch(request.getTargetMuscles()::contains))
+                .toList());
+        }
+        if (selected.isEmpty()) {
+            selected.add(templates.get("core"));
+        }
+
+        List<String> painAreas = request.getCurrentPainAreas() == null
+            ? Collections.emptyList()
+            : request.getCurrentPainAreas();
+
+        List<FallbackExercise> safeExercises = selected.stream()
+            .filter(ex -> ex.primaryMuscles().stream().noneMatch(painAreas::contains))
+            .toList();
+        if (safeExercises.isEmpty()) {
+            return List.of(toRoutineBlock(templates.get("core"), 1));
+        }
+
+        List<RoutineBlock> safeBlocks = new ArrayList<>();
+        for (int i = 0; i < safeExercises.size(); i++) {
+            safeBlocks.add(toRoutineBlock(safeExercises.get(i), i + 1));
+        }
+        return safeBlocks;
+    }
+
+    private List<RoutineBlock> buildCatalogFallbackBlocks(RoutineGenerateRequest request, StatusReasonCode reasonCode) {
+        List<String> targetMuscles = resolveFallbackTargetMuscles(request);
+        Set<String> painAreas = request.getCurrentPainAreas() == null
+            ? Collections.emptySet()
+            : Set.copyOf(request.getCurrentPainAreas());
+        Set<String> unavailableEquipment = request.getUnavailableEquipment() == null
+            ? Collections.emptySet()
+            : Set.copyOf(request.getUnavailableEquipment());
+
+        List<ExerciseTierEntity> selected = exerciseTierRepository.findAll().stream()
+            .filter(ex -> isFallbackCandidate(ex, targetMuscles, painAreas, unavailableEquipment))
+            .sorted(Comparator
+                .comparingInt((ExerciseTierEntity ex) -> isBodyweight(ex) ? 0 : 1)
+                .thenComparingInt(ex -> ex.getDifficultyTier() == null ? 99 : ex.getDifficultyTier().intValue())
+                .thenComparing(ExerciseTierEntity::getId))
+            .limit(2)
+            .toList();
+
+        List<RoutineBlock> blocks = new ArrayList<>();
+        for (int i = 0; i < selected.size(); i++) {
+            blocks.add(toRoutineBlock(toFallbackExercise(selected.get(i)), i + 1));
+        }
+        if (!blocks.isEmpty()) {
+            log.warn(
+                "AI fallback catalog selected reason={} targetMuscles={} painAreas={} unavailableEquipment={} exerciseIds={}",
+                reasonCode.name(),
+                targetMuscles,
+                painAreas,
+                unavailableEquipment,
+                blocks.stream().map(RoutineBlock::getExerciseId).toList()
+            );
+        }
+        return blocks;
+    }
+
+    private List<String> resolveFallbackTargetMuscles(RoutineGenerateRequest request) {
+        if (request.getTargetMuscles() != null && !request.getTargetMuscles().isEmpty()) {
+            return normalizeTargetMuscles(request.getTargetMuscles());
+        }
+        String split = request.getTargetSplitLabel() == null ? "" : request.getTargetSplitLabel().trim().toLowerCase();
+        return switch (split) {
+            case "push" -> List.of("chest", "triceps", "front-deltoids");
+            case "pull" -> List.of("upper-back", "biceps");
+            case "legs" -> List.of("quadriceps", "gluteal");
+            case "core" -> List.of("abs");
+            default -> Collections.emptyList();
+        };
+    }
+
+    private boolean isFallbackCandidate(
+        ExerciseTierEntity exercise,
+        List<String> targetMuscles,
+        Set<String> painAreas,
+        Set<String> unavailableEquipment
+    ) {
+        if (exercise.getPrimaryMuscle() == null || exercise.getNameEn() == null) {
+            return false;
+        }
+        if (!targetMuscles.isEmpty() && !targetMuscles.contains(exercise.getPrimaryMuscle())) {
+            return false;
+        }
+        if (containsAny(exercise.getPrimaryMuscle(), painAreas)
+            || containsAny(exercise.getSecondaryMuscle(), painAreas)
+            || containsAny(exercise.getPainTriggers(), painAreas)) {
+            return false;
+        }
+        if (containsAny(exercise.getEquipmentReq(), unavailableEquipment)) {
+            return false;
+        }
+        return isBodyweight(exercise) && (exercise.getDifficultyTier() == null || exercise.getDifficultyTier() <= 3);
+    }
+
+    private boolean containsAny(String csv, Set<String> values) {
+        if (csv == null || csv.isBlank() || values.isEmpty()) {
+            return false;
+        }
+        for (String token : csv.split(",")) {
+            if (values.contains(token.trim())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isBodyweight(ExerciseTierEntity exercise) {
+        return exercise.getEquipmentReq() != null && exercise.getEquipmentReq().contains("BODYWEIGHT");
+    }
+
+    private FallbackExercise toFallbackExercise(ExerciseTierEntity exercise) {
+        return new FallbackExercise(
+            String.valueOf(exercise.getId()),
+            exercise.getNameEn(),
+            null,
+            collectMuscles(exercise),
+            exercise.getEquipmentReq(),
+            "STATIC".equalsIgnoreCase(exercise.getMovementType()) ? 3 : 2,
+            "STATIC".equalsIgnoreCase(exercise.getMovementType()) ? 30 : 10,
+            75
+        );
+    }
+
+    private List<String> collectMuscles(ExerciseTierEntity exercise) {
+        List<String> muscles = new ArrayList<>();
+        muscles.add(exercise.getPrimaryMuscle());
+        if (exercise.getSecondaryMuscle() != null && !exercise.getSecondaryMuscle().isBlank()) {
+            for (String secondary : exercise.getSecondaryMuscle().split(",")) {
+                String muscle = secondary.trim();
+                if (!muscle.isBlank() && !muscles.contains(muscle)) {
+                    muscles.add(muscle);
+                }
+            }
+        }
+        return muscles;
+    }
+
+    private RoutineBlock toRoutineBlock(FallbackExercise exercise, int order) {
+        RoutineBlock block = new RoutineBlock();
+        block.setOrder(order);
+        block.setExerciseId(exercise.exerciseId());
+        block.setExerciseName(exercise.exerciseName());
+        block.setMovementPattern(exercise.movementPattern());
+        block.setPrimaryMuscles(exercise.primaryMuscles());
+        block.setEquipmentType(exercise.equipmentType());
+        block.setDefaultRestSec(exercise.restSec());
+        block.setExerciseRationale("AI 응답 실패 시에도 부상 부위를 피하도록 구성한 저위험 대체 운동입니다.");
+        block.setSubstitutionCandidates(new ArrayList<>());
+
+        List<Prescription> prescriptions = new ArrayList<>();
+        for (int i = 1; i <= exercise.sets(); i++) {
+            Prescription p = new Prescription();
+            p.setSetIndex(i);
+            p.setSetType("working");
+            p.setTargetReps(exercise.reps());
+            p.setTargetWeightKg(null);
+            p.setTargetRir(3);
+            p.setTargetRestSec(exercise.restSec());
+            prescriptions.add(p);
+        }
+        block.setPrescription(prescriptions);
+        return block;
+    }
+
+    private int estimateFallbackTime(List<RoutineBlock> blocks) {
+        int seconds = blocks.stream()
+            .flatMap(block -> block.getPrescription().stream())
+            .mapToInt(p -> 45 + p.getTargetRestSec())
+            .sum();
+        return Math.max(5, (int) Math.ceil(seconds / 60.0));
+    }
+
+    private record FallbackExercise(
+        String exerciseId,
+        String exerciseName,
+        String movementPattern,
+        List<String> primaryMuscles,
+        String equipmentType,
+        int sets,
+        int reps,
+        int restSec
+    ) {
     }
 
     private AiRoutineRequest mapToAiRequest(RoutineGenerateRequest request) {
@@ -183,12 +383,12 @@ public class RoutineService {
         return MuscleMapper.normalizeTargetMuscles(targetMuscles);
     }
 
-    // 2. 루틴 확정 (Request -> Entity -> Response)
+    // 2. 猷⑦떞 ?뺤젙 (Request -> Entity -> Response)
     @Transactional
     public RoutineFinalResponse finalizeRoutine(String routineDraftId, RoutineFinalRequest request) {
         String currentUserId = securityUtils.getCurrentUserId();
 
-        // Draft 조회 및 권한 검증
+        // Draft 議고쉶 諛?沅뚰븳 寃利?
         RoutineDraftEntity draft = routineDraftRepository.findById(routineDraftId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
@@ -196,7 +396,7 @@ public class RoutineService {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
-        // Final Entity 생성
+        // Final Entity ?앹꽦
         RoutineFinalEntity finalEntity = RoutineFinalEntity.builder()
             .routineDraft(draft)
             .userId(currentUserId)
@@ -212,11 +412,11 @@ public class RoutineService {
         return RoutineFinalResponse.fromEntity(savedFinal);
     }
 
-    // 3. 내 확정 루틴 페이징 조회 (Entity Page -> Response Page 변환)
+    // 3. ???뺤젙 猷⑦떞 ?섏씠吏?議고쉶 (Entity Page -> Response Page 蹂??
     public Page<RoutineFinalResponse> getMyFinalRoutines(Pageable pageable) {
         String userId = securityUtils.getCurrentUserId();
 
-        // Entity 페이징 조회 후 Response DTO로 매핑하여 반환
+        // Entity ?섏씠吏?議고쉶 ??Response DTO濡?留ㅽ븨?섏뿬 諛섑솚
         return routineFinalRepository.findByUserId(userId, pageable)
             .map(RoutineFinalResponse::fromEntity);
     }
@@ -224,16 +424,16 @@ public class RoutineService {
     public RoutineFinalResponse getFinalRoutine(String finalId) {
         String currentUserId = securityUtils.getCurrentUserId();
 
-        // 1. 데이터 조회
+        // 1. ?곗씠??議고쉶
         RoutineFinalEntity finalEntity = routineFinalRepository.findById(finalId)
             .orElseThrow(() -> new BusinessException(ErrorCode.ROUTINE_NOT_FOUND));
 
-        // 2. 권한 체크 (본인의 루틴인지 확인)
+        // 2. 沅뚰븳 泥댄겕 (蹂몄씤??猷⑦떞?몄? ?뺤씤)
         if (!finalEntity.getUserId().equals(currentUserId)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
-        // 3. DTO 변환 반환
+        // 3. DTO 蹂??諛섑솚
         return RoutineFinalResponse.fromEntity(finalEntity);
     }
 }

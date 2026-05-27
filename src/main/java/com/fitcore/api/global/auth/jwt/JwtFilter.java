@@ -37,7 +37,7 @@ public class JwtFilter extends GenericFilterBean {
             Authentication authentication = new UsernamePasswordAuthenticationToken(
                 "demo-user-001",
                 jwt,
-                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"))
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);
         } else if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {

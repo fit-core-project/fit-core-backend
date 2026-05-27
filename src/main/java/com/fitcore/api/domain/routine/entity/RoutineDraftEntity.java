@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
@@ -56,9 +58,11 @@ public class RoutineDraftEntity {
     @Column(name = "target_split_label", nullable = false, length = 64)
     private String targetSplitLabel;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "generation_status", nullable = false, length = 16)
     private GenerationStatus generationStatus;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status_reason_code", nullable = false, length = 32)
     private StatusReasonCode statusReasonCode;
 

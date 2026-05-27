@@ -196,7 +196,7 @@ class RoutineWorkoutFlowIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.routineBlocks[0].primaryMuscles[0]").value("chest"))
             .andExpect(jsonPath("$.routineBlocks[0].primaryMuscles[1]").value("triceps"))
-            .andExpect(jsonPath("$.routineBlocks[0].equipmentType").value("BARBELL"));
+            .andExpect(jsonPath("$.routineBlocks[0].equipmentType").value("BODYWEIGHT"));
     }
 
     private AiRoutineResponse successAiResponse() {
