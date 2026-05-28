@@ -12,14 +12,20 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fitcore.api.domain.exercise.entity.ExerciseTierEntity;
+import com.fitcore.api.domain.exercise.repository.ExerciseTierRepository;
+import com.fitcore.api.domain.routine.dto.Doms;
 import com.fitcore.api.domain.user.components.UserComponent;
 import com.fitcore.api.domain.user.entity.UserProfileEntity;
+import com.fitcore.api.domain.user.repository.UserRepository;
 import com.fitcore.api.domain.workout.entity.WorkoutSessionEntity;
 import com.fitcore.api.domain.workout.entity.WorkoutSetEntity;
 import com.fitcore.api.domain.workout.repository.WorkoutSessionRepository;
@@ -45,6 +51,8 @@ public class WorkoutSessionService {
     private final WorkoutSetRepository workoutSetRepository;
     private final RoutineFinalRepository routineFinalRepository;
     private final UserComponent userComponent;
+    private final ExerciseTierRepository exerciseTierRepository;
+    private final UserRepository userRepository;
 
     /**
      * 운동 세션 및 세트 생성
@@ -96,7 +104,50 @@ public class WorkoutSessionService {
         // 3. 저장 (Cascade 설정으로 인해 세션만 저장해도 세트가 함께 저장됨)
         WorkoutSessionEntity savedSession = sessionRepository.save(session);
 
+        // 4. 운동한 근육을 DOMS level 2(moderate)로 기록
+        updateDomsAfterWorkout(userId, request);
+
         return WorkoutSessionResponse.fromEntity(savedSession);
+    }
+
+    private void updateDomsAfterWorkout(String userId, WorkoutSessionRequest request) {
+        Set<Long> exerciseIds = request.getSets().stream()
+            .map(s -> {
+                try { return Long.parseLong(s.getExerciseId()); }
+                catch (NumberFormatException e) { return null; }
+            })
+            .filter(id -> id != null)
+            .collect(Collectors.toSet());
+
+        if (exerciseIds.isEmpty()) return;
+
+        Set<String> workedMuscles = exerciseTierRepository.findAllById(exerciseIds).stream()
+            .map(ExerciseTierEntity::getPrimaryMuscle)
+            .filter(m -> m != null && !m.isBlank())
+            .collect(Collectors.toSet());
+
+        if (workedMuscles.isEmpty()) return;
+
+        userRepository.findById(userId).ifPresent(user -> {
+            LocalDate today = LocalDate.now();
+            Map<String, Doms> domsMap = new LinkedHashMap<>();
+
+            List<Doms> existing = user.getDoms();
+            if (existing != null) {
+                existing.forEach(d -> domsMap.put(d.getBodyPart(), d));
+            }
+
+            workedMuscles.forEach(muscle ->
+                domsMap.put(muscle, Doms.builder()
+                    .bodyPart(muscle)
+                    .level("moderate")
+                    .recordedAt(today)
+                    .build())
+            );
+
+            user.updateDoms(new ArrayList<>(domsMap.values()));
+            log.info("DOMS updated for user={} muscles={}", userId, workedMuscles);
+        });
     }
 
     private void validateSourceRoutineFinal(String sourceRoutineFinalId, String userId) {

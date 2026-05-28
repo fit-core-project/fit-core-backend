@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 import jakarta.validation.constraints.NotNull;
 
 @Getter
@@ -18,4 +20,5 @@ public class Doms {
     private String bodyPart;
     @NotNull(message = "통증 레벨은 필수입니다.")
     private String level;
+    private LocalDate recordedAt;
 }

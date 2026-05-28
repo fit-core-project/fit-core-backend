@@ -173,6 +173,10 @@ public class UserProfileEntity extends BaseDeleteEntity {
         this.profileVersion += 1;
     }
 
+    public void updateDoms(List<Doms> newDoms) {
+        this.doms = newDoms;
+    }
+
     /**
      * 탈퇴 처리
      */

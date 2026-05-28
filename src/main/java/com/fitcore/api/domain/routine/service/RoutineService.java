@@ -89,10 +89,10 @@ public class RoutineService {
             AiRoutineResponse fallbackResponse = createAiFailResponse(request, reasonCode);
             RoutineDraftEntity aiFailEntity = RoutineDraftEntity.builder()
                 .userId(securityUtils.getCurrentUserId())
-                .generationStatus(GenerationStatus.fallback)
-                .statusReasonCode(reasonCode)
+                .generationStatus(fallbackResponse.getGenerationStatus())
+                .statusReasonCode(fallbackResponse.getStatusReasonCode())
                 .targetSplitLabel(request.getTargetSplitLabel() != null && !request.getTargetSplitLabel().isBlank() ? request.getTargetSplitLabel() : "custom")
-                .isFallback(true)
+                .isFallback(Boolean.TRUE.equals(fallbackResponse.getIsFallback()))
                 .requestPayloadSnapshot(objectMapper.convertValue(request, new TypeReference<>() {
                 }))
                 .responsePayloadSnapshot(
@@ -127,14 +127,27 @@ public class RoutineService {
         List<RoutineBlock> blocks = buildRequestAwareFallbackBlocks(request, reasonCode);
 
         AiRoutineResponse response = new AiRoutineResponse();
-        response.setGenerationStatus(GenerationStatus.fallback);
-        response.setStatusReasonCode(reasonCode);
-        response.setIsFallback(true);
         response.setRoutineBlocks(blocks);
-        response.setSummaryTitle("안전 대체 루틴");
-        response.setRationaleSummary(List.of("AI 서버 응답을 사용할 수 없어 요청한 부위와 제한 조건을 반영한 최소 안전 루틴으로 대체했습니다."));
-        response.setWarnings(List.of("통증이 있거나 불편하면 즉시 중단하고 프로필의 부상 부위를 확인하세요."));
-        response.setTotalEstimatedTime(estimateFallbackTime(blocks));
+
+        if (blocks.isEmpty()) {
+            response.setGenerationStatus(GenerationStatus.failed);
+            response.setStatusReasonCode(StatusReasonCode.emptyCandidate);
+            response.setIsFallback(false);
+            response.setTotalEstimatedTime(0);
+            response.setSummaryTitle("루틴을 만들 수 없음");
+            response.setRationaleSummary(List.of("선택한 운동 부위, 부상/DOMS 제약, 사용 불가 장비 조건을 모두 적용한 결과 사용 가능한 운동 후보가 없다."));
+            response.setWarnings(List.of("운동 부위 또는 장비 조건을 변경한 뒤 다시 생성한다."));
+            log.warn("AI fallback empty candidate reason={} request={}", reasonCode.name(), request);
+        } else {
+            response.setGenerationStatus(GenerationStatus.fallback);
+            response.setStatusReasonCode(reasonCode);
+            response.setIsFallback(true);
+            response.setTotalEstimatedTime(estimateFallbackTime(blocks));
+            response.setSummaryTitle("안전 대체 루틴");
+            response.setRationaleSummary(List.of("AI 서버 응답을 사용할 수 없어 요청한 부위와 제한 조건을 반영한 최소 안전 루틴으로 대체했습니다."));
+            response.setWarnings(List.of("통증이 있거나 불편하면 즉시 중단하고 프로필의 부상 부위를 확인하세요."));
+        }
+
         return response;
     }
 
@@ -175,7 +188,7 @@ public class RoutineService {
             .filter(ex -> ex.primaryMuscles().stream().noneMatch(painAreas::contains))
             .toList();
         if (safeExercises.isEmpty()) {
-            return List.of(toRoutineBlock(templates.get("core"), 1));
+            return Collections.emptyList();
         }
 
         List<RoutineBlock> safeBlocks = new ArrayList<>();
