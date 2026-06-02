@@ -1,18 +1,8 @@
 package com.fitcore.api.global.config;
 
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-public class WebConfig implements WebMvcConfigurer {
-
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**")
-            .allowedOrigins("http://localhost:3000", "http://localhost:3001")
-            .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
-            .allowedHeaders("*")
-            .allowCredentials(true);
-    }
+public class WebConfig {
+    // CORS는 SecurityConfig의 CorsConfigurationSource 빈에서 단일 관리 (CORS_ALLOWED_ORIGINS env)
 }

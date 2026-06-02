@@ -3,13 +3,18 @@ package com.fitcore.api.global.config;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -28,6 +33,10 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final TokenProvider tokenProvider;
+    private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider;
+
+    @Value("${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}")
+    private String corsAllowedOriginsRaw;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -44,9 +53,9 @@ public class SecurityConfig {
             // 경로별 권한 설정
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/dev/**").authenticated()  // prod에선 @Profile("!prod")로 미등록, local은 인증 필요
                 .requestMatchers("/api/v1/auth/set-link-mode").authenticated()
                 .requestMatchers("/",
-                    "/api/dev/logs",
                     "/auth/**",
                     "/oauth2/**",
                     "/login/**",
@@ -54,14 +63,17 @@ public class SecurityConfig {
                     "/v3/api-docs/**",
                     "/swagger-ui.html").permitAll()
                 .anyRequest().authenticated()
-            )
+            );
 
-            // OAuth2 로그인 설정
-            .oauth2Login(oauth2 -> oauth2
+        // OAuth2 provider env가 하나라도 설정된 경우에만 oauth2Login 활성화
+        if (clientRegistrationRepositoryProvider.getIfAvailable() != null) {
+            http.oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                 .successHandler(oAuth2SuccessHandler)
-            )
+            );
+        }
 
+        http
             // JWT 필터 추가
             .addFilterBefore(new JwtFilter(tokenProvider), UsernamePasswordAuthenticationFilter.class);
 
@@ -70,17 +82,16 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
+        List<String> origins = Arrays.stream(corsAllowedOriginsRaw.split(","))
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .collect(Collectors.toList());
 
-        // 프론트엔드 도메인 허용
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:3001"));
-        // 허용할 HTTP 메서드
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        // 허용할 헤더
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Set-Cookie"));
-        // 자격 증명(쿠키, 인증 헤더) 허용
         configuration.setAllowCredentials(true);
-        // 캐시 시간 설정 (초 단위)
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

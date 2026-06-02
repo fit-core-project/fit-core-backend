@@ -1,0 +1,32 @@
+# 빌드 산출물
+build/
+out/
+bin/
+
+# Gradle 캐시
+.gradle/
+
+# Git
+.git/
+.gitignore
+
+# 시크릿/env — 절대 이미지에 포함 금지
+.env
+*.env
+!*.env.example
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# 문서/메타
+*.md
+HELP.md
+AGENTS.md
+
+# OS 임시 파일
+.DS_Store
+*.tmp
