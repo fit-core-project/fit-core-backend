@@ -4,7 +4,9 @@
 
 SET NAMES utf8mb4;
 
-INSERT IGNORE INTO `exercise_tier` (`id`, `name_kr`, `name_en`, `primary_muscle`, `secondary_muscle`, `equipment_req`, `difficulty_tier`, `efficiency_tier`, `pain_triggers`, `movement_type`, `substitute_exercise_ids`) VALUES (1,'시티드 리스트 컬','Seated Wrist Curl','forearm',NULL,'BARBELL, DUMBBELL, CABLE',1,1,'forearm','ISOLATION','6, 9, 2, 3, 5, 140'),
+DELETE FROM `exercise_tier` WHERE `id` BETWEEN 1 AND 174;
+
+INSERT INTO `exercise_tier` (`id`, `name_kr`, `name_en`, `primary_muscle`, `secondary_muscle`, `equipment_req`, `difficulty_tier`, `efficiency_tier`, `pain_triggers`, `movement_type`, `substitute_exercise_ids`) VALUES (1,'시티드 리스트 컬','Seated Wrist Curl','forearm',NULL,'BARBELL, DUMBBELL, CABLE',1,1,'forearm','ISOLATION','6, 9, 2, 3, 5, 140'),
 (2,'시티드 리스트 익스텐션','Seated Wrist Extension','forearm',NULL,'BARBELL, DUMBBELL, CABLE',1,2,'forearm','ISOLATION','6, 9, 1, 3, 5, 140'),
 (3,'스탠딩 리스트 컬','Standing Wrist Curl','forearm',NULL,'BARBELL, DUMBBELL, CABLE',2,3,'forearm','ISOLATION','6, 9, 1, 2, 5, 140'),
 (4,'해머 컬','Hammer Curl','biceps','forearm','DUMBBELL, CABLE',2,4,'biceps, forearm','ISOLATION','11, 12, 13, 14, 130, 15'),
@@ -13,7 +15,7 @@ INSERT IGNORE INTO `exercise_tier` (`id`, `name_kr`, `name_en`, `primary_muscle`
 (7,'데드리프트','Deadlift','lower-back','gluteal, hamstring, forearm','BARBELL, DUMBBELL',5,6,'lower-back, forearm, hamstring, gluteal','COMPOUND','134, 66, 123, 133, 135'),
 (8,'데드행','Dead Hang','forearm','upper-back','BODYWEIGHT',4,6,'upper-back, forearm, back-deltoids','STATIC','140, 1, 2, 3, 5, 6'),
 (9,'악력기','Hand Gripper','forearm',NULL,'MACHINE',2,7,'forearm','ISOLATION','1, 2, 3, 5, 6, 140'),
-(10,'파머스 워크','Farmer\'s Walk','forearm','trapezius, forearm','DUMBBELL, BARBELL',2,6,'trapezius, forearm','COMPOUND','140, 6, 9, 1, 2, 3'),
+(10,'파머스 워크','Farmer''s Walk','forearm','trapezius, forearm','DUMBBELL, BARBELL',2,6,'trapezius, forearm','COMPOUND','140, 6, 9, 1, 2, 3'),
 (11,'서포티드 인클라인 컬','Supported Incline Curl','biceps','forearm','DUMBBELL, CABLE',1,1,'biceps, forearm, front-deltoids','ISOLATION','13, 130, 12, 14, 15, 16'),
 (12,'인클라인 덤벨 컬','Incline Dumbbell Curl','biceps','forearm','DUMBBELL',2,2,'biceps, forearm, front-deltoids','ISOLATION','14, 15, 11, 13, 130, 16'),
 (13,'프리처 컬','Preacher Curl','biceps','forearm','BARBELL, DUMBBELL, CABLE, MACHINE',1,2,'biceps, forearm','ISOLATION','11, 130, 12, 14, 15, 16'),
@@ -26,7 +28,7 @@ INSERT IGNORE INTO `exercise_tier` (`id`, `name_kr`, `name_en`, `primary_muscle`
 (20,'디클라인 싯업','Decline Sit-up','abs',NULL,'BODYWEIGHT',3,3,'lower-back, abs, neck','ISOLATION','24, 119, 22, 19, 21, 23'),
 (21,'업도미널','Abdominal Machine','abs',NULL,'MACHINE',1,1,'abs','ISOLATION','144, 119, 22, 20, 24, 25'),
 (22,'라잉 레그레이즈','Lying Leg Raise','abs',NULL,'BODYWEIGHT',2,3,'lower-back, abs, gluteal','ISOLATION','119, 20, 24, 19, 21, 23'),
-(23,'캡틴스 체어 레그레이즈','Captain\'s Chair Leg Raise','abs',NULL,'MACHINE',2,2,'abs, gluteal','ISOLATION','144, 119, 22, 20, 24, 19'),
+(23,'캡틴스 체어 레그레이즈','Captain''s Chair Leg Raise','abs',NULL,'MACHINE',2,2,'abs, gluteal','ISOLATION','144, 119, 22, 20, 24, 19'),
 (24,'행잉 레그레이즈','Hanging Leg Raise','abs','forearm','BODYWEIGHT',5,2,'lower-back, forearm, front-deltoids, abs','ISOLATION','20, 119, 22, 19, 21, 23'),
 (25,'플러터 킥','Flutter Kicks','abs',NULL,'BODYWEIGHT',1,5,'lower-back, abs, gluteal','ISOLATION','119, 22, 21, 20, 24, 19'),
 (26,'플랭크','Plank','abs','front-deltoids','BODYWEIGHT',1,6,'lower-back, front-deltoids, abs','STATIC','120, 145, 119, 22, 21, 20'),
@@ -177,4 +179,5 @@ INSERT IGNORE INTO `exercise_tier` (`id`, `name_kr`, `name_en`, `primary_muscle`
 (171,'스패니시 스쿼트','Spanish Squat','quadriceps','gluteal','BAND',2,3,'quadriceps, gluteal, knees','COMPOUND','154, 102, 103, 174, 172, 114'),
 (172,'피터슨 스텝 업','Peterson Step-Up','quadriceps','gluteal','BODYWEIGHT, DUMBBELL',3,4,'quadriceps, gluteal, knees','COMPOUND','153, 101, 99, 98, 100, 171'),
 (173,'터미널 니 익스텐션','Terminal Knee Extension','quadriceps',NULL,'BAND, CABLE',1,5,'knees, quadriceps','ISOLATION','109, 104, 154, 102, 103, 174'),
-(174,'ATG 스플릿 스쿼트','ATG Split Squat','quadriceps','gluteal, hamstring','BODYWEIGHT, DUMBBELL',4,3,'hamstring, quadriceps, gluteal, knees','COMPOUND','153, 99, 98, 101, 100, 171');
+(174,'ATG 스플릿 스쿼트','ATG Split Squat','quadriceps','gluteal, hamstring','BODYWEIGHT, DUMBBELL',4,3,'hamstring, quadriceps, gluteal, knees','COMPOUND','153, 99, 98, 101, 100, 171')
+;
