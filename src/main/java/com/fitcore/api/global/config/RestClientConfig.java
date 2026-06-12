@@ -18,13 +18,15 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class RestClientConfig {
 
-    // AI 응답 대기 시간 — Gemini 생성이 느릴 수 있어 넉넉히 설정.
-    // 튜닝 필요 시 이 두 상수만 조정.
-    private static final int CONNECT_TIMEOUT_SECONDS = 3;
-    private static final int RESPONSE_TIMEOUT_SECONDS = 60;
-
+    // AI routine generation can take longer than ordinary API calls during demos.
     @Value("${ai.server.url}")
     private String aiServerUrl;
+
+    @Value("${ai.client.connect-timeout-seconds:3}")
+    private int connectTimeoutSeconds;
+
+    @Value("${ai.client.response-timeout-seconds:180}")
+    private int responseTimeoutSeconds;
 
     private final Environment environment;
 
@@ -35,9 +37,9 @@ public class RestClientConfig {
     @Bean
     public RestClient aiRestClient() {
         RequestConfig requestConfig = RequestConfig.custom()
-            .setConnectTimeout(Timeout.ofSeconds(CONNECT_TIMEOUT_SECONDS))
-            .setConnectionRequestTimeout(Timeout.ofSeconds(CONNECT_TIMEOUT_SECONDS))
-            .setResponseTimeout(Timeout.ofSeconds(RESPONSE_TIMEOUT_SECONDS))
+            .setConnectTimeout(Timeout.ofSeconds(connectTimeoutSeconds))
+            .setConnectionRequestTimeout(Timeout.ofSeconds(connectTimeoutSeconds))
+            .setResponseTimeout(Timeout.ofSeconds(responseTimeoutSeconds))
             .build();
 
         var httpClient = HttpClients.custom()
@@ -55,7 +57,7 @@ public class RestClientConfig {
             builder.requestInterceptor((request, body, execution) -> {
                 System.out.println(">>> [DEBUG] Request Method: " + request.getMethod());
                 System.out.println(">>> [DEBUG] Request Headers: " + request.getHeaders());
-                System.out.println(">>> [DEBUG] Request Body: " + new String(body));
+                System.out.println(">>> [DEBUG] Request Body Bytes: " + body.length);
                 return execution.execute(request, body);
             });
         }
