@@ -41,6 +41,9 @@ import com.fitcore.api.global.common.entity.BaseDeleteEntity;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @SoftDelete(columnName = "is_deleted")
 public class UserProfileEntity extends BaseDeleteEntity {
+    public static final int DEFAULT_TIME_AVAILABLE = 60;
+    public static final int DEFAULT_TRAINING_DAYS_PER_WEEK = 3;
+    public static final GoalType DEFAULT_GOAL_TYPE = GoalType.generalFitness;
 
     @Id
     @UuidGenerator
@@ -142,6 +145,38 @@ public class UserProfileEntity extends BaseDeleteEntity {
         this.birthDate = birthDate;
         this.status = (status != null) ? status : UserStatus.ACTIVE;
         this.role = UserRole.ROLE_USER;
+        applyPreferenceDefaults();
+    }
+
+    public void applyPreferenceDefaults() {
+        if (this.timeAvailable == null) {
+            this.timeAvailable = DEFAULT_TIME_AVAILABLE;
+        }
+        if (this.trainingDaysPerWeek == null) {
+            this.trainingDaysPerWeek = DEFAULT_TRAINING_DAYS_PER_WEEK;
+        }
+        if (this.goalType == null) {
+            this.goalType = DEFAULT_GOAL_TYPE;
+        }
+        if (this.equipmentAccess == null) {
+            this.equipmentAccess = List.of();
+        }
+    }
+
+    public Integer getEffectiveTimeAvailable() {
+        return timeAvailable != null ? timeAvailable : DEFAULT_TIME_AVAILABLE;
+    }
+
+    public GoalType getEffectiveGoalType() {
+        return goalType != null ? goalType : DEFAULT_GOAL_TYPE;
+    }
+
+    public List<String> getEffectiveEquipmentAccess() {
+        return equipmentAccess != null ? equipmentAccess : List.of();
+    }
+
+    public int getEffectiveTrainingDaysPerWeek() {
+        return trainingDaysPerWeek != null ? trainingDaysPerWeek : DEFAULT_TRAINING_DAYS_PER_WEEK;
     }
 
     public void updateProfile(UserProfileUpdateRequest request) {

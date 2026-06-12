@@ -30,10 +30,10 @@ public class UserPreferencesResponse {
     private Map<String, BigDecimal> baselineWeights;
 
     public UserPreferencesResponse(UserProfileEntity entity) {
-        this.timeAvailable = entity.getTimeAvailable() != null ? entity.getTimeAvailable() : 60;
-        this.goal = entity.getGoalType();
-        this.equipment = entity.getEquipmentAccess();
-        this.weeklyFrequency = entity.getTrainingDaysPerWeek();
+        this.timeAvailable = entity.getEffectiveTimeAvailable();
+        this.goal = entity.getEffectiveGoalType();
+        this.equipment = entity.getEffectiveEquipmentAccess();
+        this.weeklyFrequency = entity.getEffectiveTrainingDaysPerWeek();
         this.splitPreference = entity.getSplitType();
         this.baselineWeights = Optional.ofNullable(entity.getStrengthBaseline())
             .orElseGet(Collections::emptyList)
