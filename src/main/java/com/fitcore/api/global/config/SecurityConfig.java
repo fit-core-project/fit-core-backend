@@ -38,6 +38,9 @@ public class SecurityConfig {
     @Value("${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}")
     private String corsAllowedOriginsRaw;
 
+    @Value("${app.auth.demo-token-enabled:false}")
+    private boolean demoTokenEnabled;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -56,6 +59,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/dev/**").authenticated()  // prod에선 @Profile("!prod")로 미등록, local은 인증 필요
                 .requestMatchers("/api/v1/auth/set-link-mode").authenticated()
                 .requestMatchers("/",
+                    "/api/health",
+                    "/api/ai/health",
+                    "/actuator/health",
                     "/auth/**",
                     "/oauth2/**",
                     "/login/**",
@@ -75,7 +81,7 @@ public class SecurityConfig {
 
         http
             // JWT 필터 추가
-            .addFilterBefore(new JwtFilter(tokenProvider), UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(new JwtFilter(tokenProvider, demoTokenEnabled), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
