@@ -61,6 +61,11 @@ public class AiController {
         return forwardToPythonServer("/parse-log", requestBody, AiEndpoint.QUICKLOG);
     }
 
+    @PostMapping("/parse-diet")
+    public ResponseEntity<String> parseDiet(@RequestBody String requestBody) {
+        return forwardToPythonServer("/parse-diet", requestBody, AiEndpoint.DIET);
+    }
+
     @PostMapping(value = "/stt", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> speechToText(@RequestPart("audio_file") MultipartFile audioFile) {
         try {
@@ -214,6 +219,7 @@ public class AiController {
             JsonNode root = objectMapper.readTree(body);
             return switch (endpoint) {
                 case QUICKLOG -> root.has("diet_logs") && root.has("workout_logs") && root.has("overall_summary");
+                case DIET -> root.has("items");
                 case SUPPLEMENT -> root.has("answer");
                 case STT -> root.has("text") && root.has("status");
                 case ROUTINE -> root.has("generationStatus") && root.has("routineBlocks");
@@ -238,6 +244,7 @@ public class AiController {
 
         String body = switch (endpoint) {
             case QUICKLOG -> fallbackResponseFactory.quicklog(reason);
+            case DIET -> fallbackResponseFactory.diet(reason);
             case SUPPLEMENT -> fallbackResponseFactory.supplement(reason);
             case STT -> fallbackResponseFactory.stt(reason);
             case ROUTINE -> fallbackResponseFactory.routine(reason);
@@ -251,6 +258,7 @@ public class AiController {
     private enum AiEndpoint {
         ROUTINE("generate-routine"),
         QUICKLOG("parse-log"),
+        DIET("parse-diet"),
         SUPPLEMENT("supplement-chat"),
         STT("stt");
 

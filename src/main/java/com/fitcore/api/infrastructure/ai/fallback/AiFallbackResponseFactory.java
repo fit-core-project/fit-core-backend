@@ -20,6 +20,14 @@ public class AiFallbackResponseFactory {
         this.objectMapper = objectMapper;
     }
 
+    public String diet(StatusReasonCode reason) {
+        return toJson(Map.of(
+            "items", List.of(),
+            "status", "fallback",
+            "fallback_reason", reason.name()
+        ));
+    }
+
     public String quicklog(StatusReasonCode reason) {
         return toJson(Map.of(
             "diet_logs", List.of(),
