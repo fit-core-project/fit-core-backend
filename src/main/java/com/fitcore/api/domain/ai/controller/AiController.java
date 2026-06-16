@@ -160,10 +160,17 @@ public class AiController {
     private ResponseEntity<String> forwardToPythonServer(String path, String body, AiEndpoint endpoint) {
         long startedAt = System.currentTimeMillis();
         try {
+            Object outboundBody = body;
+            try {
+                outboundBody = objectMapper.readTree(body);
+            } catch (Exception ignored) {
+                // Keep the existing raw forwarding path for malformed payloads so fallback classification is unchanged.
+            }
+
             ResponseEntity<String> response = aiRestClient.post()
                 .uri(path)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(body)
+                .body(outboundBody)
                 .retrieve()
                 .toEntity(String.class);
 
