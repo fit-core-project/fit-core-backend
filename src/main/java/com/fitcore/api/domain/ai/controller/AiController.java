@@ -47,7 +47,7 @@ public class AiController {
     private String appEnv;
 
     @PostMapping("/supplement-chat")
-    public ResponseEntity<String> supplementChat(@RequestBody String requestBody) {
+    public ResponseEntity<String> supplementChat(@RequestBody(required = false) String requestBody) {
         return forwardToPythonServer("/supplement-chat", requestBody, AiEndpoint.SUPPLEMENT);
     }
 
@@ -159,10 +159,15 @@ public class AiController {
 
     private ResponseEntity<String> forwardToPythonServer(String path, String body, AiEndpoint endpoint) {
         long startedAt = System.currentTimeMillis();
+        if (body == null || body.isBlank()) {
+            return fallback(endpoint, StatusReasonCode.ai_bad_response, startedAt);
+        }
         try {
-            Object outboundBody = body;
+            String outboundBody = body;
+            boolean parsedJson = false;
             try {
-                outboundBody = objectMapper.readTree(body);
+                outboundBody = objectMapper.writeValueAsString(objectMapper.readTree(body));
+                parsedJson = true;
             } catch (Exception ignored) {
                 // Keep the existing raw forwarding path for malformed payloads so fallback classification is unchanged.
             }
@@ -173,6 +178,15 @@ public class AiController {
                 .body(outboundBody)
                 .retrieve()
                 .toEntity(String.class);
+            log.info(
+                "event=ai_proxy_forward endpoint={} method=POST request_body_present=true request_body_length={} parsed_json={} upstream_path={} upstream_status={} elapsed_ms={}",
+                endpoint.logName,
+                body.length(),
+                parsedJson,
+                path,
+                response.getStatusCode().value(),
+                Math.max(0, System.currentTimeMillis() - startedAt)
+            );
 
             String responseBody = response.getBody();
             if (!response.getStatusCode().is2xxSuccessful() || responseBody == null || responseBody.isBlank()) {

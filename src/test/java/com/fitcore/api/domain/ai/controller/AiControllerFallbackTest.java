@@ -3,12 +3,16 @@ package com.fitcore.api.domain.ai.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.client.ExpectedCount.once;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.anything;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.net.ConnectException;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.client.ResourceAccessException;
@@ -23,6 +27,80 @@ import com.fitcore.api.infrastructure.ai.fallback.AiFallbackResponseFactory;
 
 class AiControllerFallbackTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Test
+    void forwardsSupplementChatJsonBodyToAi() throws Exception {
+        ControllerFixture fixture = controllerWithMockServer();
+        String requestBody = "{\"question\":\"와파린 먹는데 오메가3 먹어도 돼?\"}";
+        String aiResponse = """
+            {
+              "answer": "mock answer",
+              "sources": [
+                {
+                  "file": "supplement_interaction_rules.json",
+                  "id": "INT_OMEGA3_ANTICOAGULANTS",
+                  "type": "interaction_rule"
+                }
+              ],
+              "mode": "full",
+              "caution": "mock caution"
+            }
+            """;
+
+        fixture.server.expect(once(), requestTo("http://ai.test/api/ai/supplement-chat"))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+            .andExpect(content().json(requestBody))
+            .andRespond(withSuccess(aiResponse, MediaType.APPLICATION_JSON));
+
+        var response = fixture.controller.supplementChat(requestBody);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        JsonNode body = objectMapper.readTree(response.getBody());
+        assertThat(body.path("mode").asText()).isEqualTo("full");
+        assertThat(body.path("fallback_reason").isMissingNode()).isTrue();
+        assertThat(body.path("sources").get(0).path("id").asText()).isEqualTo("INT_OMEGA3_ANTICOAGULANTS");
+        fixture.server.verify();
+    }
+
+    @Test
+    void supplementEmptyBodyDoesNotCallAiUpstream() throws Exception {
+        ControllerFixture fixture = controllerWithMockServer();
+
+        var response = fixture.controller.supplementChat("");
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        JsonNode body = objectMapper.readTree(response.getBody());
+        assertThat(body.path("mode").asText()).isEqualTo("fallback");
+        assertThat(body.path("fallback_reason").asText()).isEqualTo("ai_bad_response");
+        fixture.server.verify();
+    }
+
+    @Test
+    void supplementMalformedJsonKeepsRawForwardingPolicy() throws Exception {
+        ControllerFixture fixture = controllerWithMockServer();
+        String requestBody = "{\"question\":\"magnesium\"";
+        String aiResponse = """
+            {
+              "answer": "mock answer",
+              "sources": [],
+              "mode": "full"
+            }
+            """;
+
+        fixture.server.expect(once(), requestTo("http://ai.test/api/ai/supplement-chat"))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+            .andExpect(content().string(requestBody))
+            .andRespond(withSuccess(aiResponse, MediaType.APPLICATION_JSON));
+
+        var response = fixture.controller.supplementChat(requestBody);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        JsonNode body = objectMapper.readTree(response.getBody());
+        assertThat(body.path("mode").asText()).isEqualTo("full");
+        fixture.server.verify();
+    }
 
     @Test
     void quicklogAi500ReturnsFallback200() throws Exception {
