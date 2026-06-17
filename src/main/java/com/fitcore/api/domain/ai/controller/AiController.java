@@ -78,6 +78,7 @@ public class AiController {
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> aiHealth() {
         String aiStatus = "down";
+        String llmStatus = "unknown";
         try {
             ResponseEntity<String> response = aiRestClient.get()
                 .uri("/health")
@@ -85,6 +86,15 @@ public class AiController {
                 .toEntity(String.class);
             if (response.getStatusCode().is2xxSuccessful()) {
                 aiStatus = "up";
+                String responseBody = response.getBody();
+                if (responseBody != null && !responseBody.isBlank()) {
+                    try {
+                        JsonNode node = objectMapper.readTree(responseBody);
+                        if (node.has("llm")) {
+                            llmStatus = node.get("llm").asText("unknown");
+                        }
+                    } catch (Exception ignored) {}
+                }
             }
         } catch (Exception e) {
             log.warn(
@@ -96,6 +106,7 @@ public class AiController {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("backend", "up");
         body.put("ai", aiStatus);
+        body.put("llm", llmStatus);
         body.put("aiBaseUrlConfigured", aiServerUrl != null && !aiServerUrl.isBlank());
         body.put("aiBaseUrlMode", aiBaseUrlMode());
         body.put("aiBaseUrlSanitized", sanitizeAiRootUrl());

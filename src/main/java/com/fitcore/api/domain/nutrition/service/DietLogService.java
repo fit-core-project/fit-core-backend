@@ -3,6 +3,7 @@ package com.fitcore.api.domain.nutrition.service;
 import com.fitcore.api.domain.nutrition.entity.DietLogEntity;
 import com.fitcore.api.domain.nutrition.repository.DietLogRepository;
 import com.fitcore.api.domain.nutrition.request.DietLogRequest;
+import com.fitcore.api.domain.nutrition.request.DietLogUpdateRequest;
 import com.fitcore.api.domain.nutrition.response.DietLogResponse;
 import com.fitcore.api.domain.nutrition.response.DietSummaryResponse;
 import com.fitcore.api.global.common.util.SecurityUtils;
@@ -131,6 +132,54 @@ public class DietLogService {
         BigDecimal total = protein.multiply(PROTEIN_KCAL_PER_G)
                 .add(carbs.multiply(CARBS_KCAL_PER_G))
                 .add(fat.multiply(FAT_KCAL_PER_G));
+        return total.setScale(0, RoundingMode.HALF_UP).intValue();
+    }
+
+    @Transactional
+    public void delete(String id) {
+        String userId = securityUtils.getCurrentUserId();
+        DietLogEntity entity = dietLogRepository.findById(id)
+                .filter(e -> e.getUserId().equals(userId))
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        dietLogRepository.delete(entity);
+    }
+
+    @Transactional
+    public DietLogResponse update(String id, DietLogUpdateRequest req) {
+        String userId = securityUtils.getCurrentUserId();
+        DietLogEntity existing = dietLogRepository.findById(id)
+                .filter(e -> e.getUserId().equals(userId))
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        int kcal = resolveKcalForManual(req.getKcal(), req.getProteinG(), req.getCarbsG(), req.getFatG());
+        LocalDateTime loggedAt = parseLoggedAt(existing.getLogDate(), req.getLoggedAt());
+
+        DietLogEntity updated = DietLogEntity.builder()
+                .id(existing.getId())
+                .userId(existing.getUserId())
+                .logDate(existing.getLogDate())
+                .mealType(req.getMealType())
+                .loggedAt(loggedAt)
+                .foodName(req.getFoodName())
+                .amountG(req.getAmountG())
+                .amountRaw(req.getAmountRaw())
+                .kcal(kcal)
+                .proteinG(req.getProteinG())
+                .carbsG(req.getCarbsG())
+                .fatG(req.getFatG())
+                .source("manual")
+                .build();
+
+        return DietLogResponse.fromEntity(dietLogRepository.save(updated));
+    }
+
+    private int resolveKcalForManual(Integer kcal, BigDecimal proteinG, BigDecimal carbsG, BigDecimal fatG) {
+        if (kcal != null) return kcal;
+        boolean hasMacros = proteinG != null || carbsG != null || fatG != null;
+        if (!hasMacros) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        BigDecimal total = orZero(proteinG).multiply(PROTEIN_KCAL_PER_G)
+                .add(orZero(carbsG).multiply(CARBS_KCAL_PER_G))
+                .add(orZero(fatG).multiply(FAT_KCAL_PER_G));
         return total.setScale(0, RoundingMode.HALF_UP).intValue();
     }
 
