@@ -8,7 +8,8 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 @Getter
 @Setter
@@ -16,9 +17,12 @@ import jakarta.validation.constraints.NotNull;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Doms {
-    @NotNull(message = "부위는 필수입니다.")
+    @NotBlank(message = "currentDoms bodyPart is required")
     private String bodyPart;
-    @NotNull(message = "통증 레벨은 필수입니다.")
+
+    @NotBlank(message = "currentDoms level is required")
+    @Pattern(regexp = "(?i)mild|moderate|severe", message = "currentDoms level must be mild, moderate, or severe")
     private String level;
+
     private LocalDate recordedAt;
 }

@@ -3,6 +3,7 @@ package com.fitcore.api.domain.routine;
 import com.fitcore.api.domain.routine.dto.FinalRoutinePayload;
 import com.fitcore.api.domain.routine.dto.Prescription;
 import com.fitcore.api.domain.routine.dto.RoutineBlock;
+import com.fitcore.api.domain.routine.response.RoutineDraftResponse;
 import com.fitcore.api.domain.routine.response.RoutineFinalResponse;
 import com.fitcore.api.domain.routine.service.RoutineService;
 import com.fitcore.api.infrastructure.ai.enums.GenerationStatus;
@@ -13,18 +14,22 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -93,6 +98,90 @@ class RoutineControllerTest {
             .userEditSummary(List.of())
             .savedAt(LocalDateTime.of(2026, 5, 20, 10, 0))
             .build();
+    }
+
+    private RoutineDraftResponse stubGeneratedDraft() {
+        return RoutineDraftResponse.builder()
+            .routineDraftId("draft-validation")
+            .generationStatus(GenerationStatus.success)
+            .statusReasonCode(StatusReasonCode.none)
+            .isFallback(false)
+            .totalEstimatedTime(70)
+            .summaryTitle("Validation routine")
+            .rationaleSummary(List.of("valid request"))
+            .warnings(List.of())
+            .routineBlocks(List.of(stubBlock(1, "barbell_bench_press", "Barbell Bench Press")))
+            .build();
+    }
+
+    private String validGenerateRequestJson() {
+        return """
+            {
+              "targetSplitLabel": "push",
+              "targetMuscles": ["chest", "front-deltoids", "triceps"],
+              "readinessLevel": "normal",
+              "timeAvailableMin": 70,
+              "currentPainAreas": ["front-deltoids"],
+              "currentDoms": [
+                {"bodyPart": "chest", "level": "moderate"},
+                {"bodyPart": "upper-back", "level": "mild"}
+              ],
+              "unavailableEquipment": ["MACHINE"],
+              "goal": "hypertrophy",
+              "userNote": "demo request"
+            }
+            """;
+    }
+
+    private void expectGenerateBadRequest(String json) throws Exception {
+        mockMvc.perform(post("/api/routines/generate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json.getBytes(StandardCharsets.UTF_8)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("C001"));
+    }
+
+    @Test
+    void generate_validGoldenFixtureShape_returnsOk() throws Exception {
+        when(routineService.generateRoutine(any())).thenReturn(stubGeneratedDraft());
+
+        mockMvc.perform(post("/api/routines/generate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validGenerateRequestJson().getBytes(StandardCharsets.UTF_8)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.routineDraftId").value("draft-validation"));
+    }
+
+    @Test
+    void generate_invalidTimeAvailableMin_returnsBadRequest() throws Exception {
+        expectGenerateBadRequest(validGenerateRequestJson().replace("\"timeAvailableMin\": 70", "\"timeAvailableMin\": 5"));
+        verifyNoInteractions(routineService);
+    }
+
+    @Test
+    void generate_blankGoal_returnsBadRequest() throws Exception {
+        expectGenerateBadRequest(validGenerateRequestJson().replace("\"goal\": \"hypertrophy\"", "\"goal\": \" \""));
+        verifyNoInteractions(routineService);
+    }
+
+    @Test
+    void generate_emptyTargetMuscles_returnsBadRequest() throws Exception {
+        expectGenerateBadRequest(validGenerateRequestJson()
+            .replace("\"targetMuscles\": [\"chest\", \"front-deltoids\", \"triceps\"]", "\"targetMuscles\": []"));
+        verifyNoInteractions(routineService);
+    }
+
+    @Test
+    void generate_blankListItem_returnsBadRequest() throws Exception {
+        expectGenerateBadRequest(validGenerateRequestJson()
+            .replace("\"currentPainAreas\": [\"front-deltoids\"]", "\"currentPainAreas\": [\" \"]"));
+        verifyNoInteractions(routineService);
+    }
+
+    @Test
+    void generate_invalidReadinessLevel_returnsBadRequest() throws Exception {
+        expectGenerateBadRequest(validGenerateRequestJson().replace("\"readinessLevel\": \"normal\"", "\"readinessLevel\": \"extreme\""));
+        verifyNoInteractions(routineService);
     }
 
     // ── GET /api/routines/finals ────────────────────────────────────
