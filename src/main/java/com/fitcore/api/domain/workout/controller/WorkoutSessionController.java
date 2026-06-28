@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -49,7 +50,7 @@ public class WorkoutSessionController {
     @PostMapping
     @Operation(summary = "운동 세션 생성", description = "새로운 운동 세션 기록을 생성하고 저장합니다.")
     public ResponseEntity<WorkoutSessionResponse> createWorkout(@Valid @RequestBody WorkoutSessionRequest request) {
-        return ResponseEntity.ok(workoutSessionService.createWorkoutSession(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(workoutSessionService.createWorkoutSession(request));
     }
 
     @GetMapping("/prs")

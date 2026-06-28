@@ -2,6 +2,7 @@ package com.fitcore.api.domain.workout;
 
 import com.fitcore.api.domain.workout.response.AttendanceWeekResponse;
 import com.fitcore.api.domain.workout.response.PrResponse;
+import com.fitcore.api.domain.workout.response.WorkoutSessionResponse;
 import com.fitcore.api.domain.workout.service.WorkoutSessionService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -130,6 +132,59 @@ class WorkoutSessionControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].actualDays").value(0))
             .andExpect(jsonPath("$[0].rate").value(0.0));
+    }
+
+    @Test
+    void createWorkout_validRequest_returns201CreatedWithBody() throws Exception {
+        when(workoutSessionService.createWorkoutSession(any())).thenReturn(
+            WorkoutSessionResponse.builder()
+                .id("workout-001")
+                .userId("demo-user-001")
+                .workoutDate(LocalDate.of(2026, 5, 26))
+                .splitLabel("push")
+                .sourceRoutineFinalId("final-001")
+                .timeAvailableMin((short) 60)
+                .durationMin((short) 45)
+                .readinessLevel("normal")
+                .currentPainAreas(List.of())
+                .currentDoms(List.of())
+                .unavailableEquipment(List.of())
+                .sets(List.of())
+                .build()
+        );
+
+        mockMvc.perform(post("/api/workouts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "workoutDate": "2026-05-26",
+                      "splitLabel": "push",
+                      "sourceRoutineFinalId": "final-001",
+                      "timeAvailableMin": 60,
+                      "durationMin": 45,
+                      "readinessLevel": "normal",
+                      "currentPainAreas": [],
+                      "currentDoms": [],
+                      "unavailableEquipment": [],
+                      "sets": [
+                        {
+                          "exerciseOrder": 1,
+                          "exerciseId": "30",
+                          "exerciseNameSnapshot": "Barbell Bench Press",
+                          "setIndex": 1,
+                          "trackingMode": "weightReps",
+                          "weightKg": 70,
+                          "reps": 8,
+                          "rir": 2,
+                          "isFailure": false,
+                          "restSec": 120
+                        }
+                      ]
+                    }
+                    """))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.id").value("workout-001"))
+            .andExpect(jsonPath("$.sourceRoutineFinalId").value("final-001"));
     }
 
     @Test

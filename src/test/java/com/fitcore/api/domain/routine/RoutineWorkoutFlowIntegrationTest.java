@@ -153,7 +153,7 @@ class RoutineWorkoutFlowIntegrationTest {
                       }]
                     }
                     """.formatted(finalId)))
-            .andExpect(status().isOk())
+            .andExpect(status().isCreated())
             .andExpect(jsonPath("$.sourceRoutineFinalId").value(finalId))
             .andExpect(jsonPath("$.sets[0].exerciseOrder").value(1));
     }
