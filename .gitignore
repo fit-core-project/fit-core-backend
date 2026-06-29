@@ -37,6 +37,9 @@ out/
 .vscode/
 AGENTS.md
 
+### Logs ###
+*.log
+
 ### Secrets ###
 .env
 *.env
