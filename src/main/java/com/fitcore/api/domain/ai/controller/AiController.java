@@ -250,7 +250,7 @@ public class AiController {
         try {
             JsonNode root = objectMapper.readTree(body);
             return switch (endpoint) {
-                case QUICKLOG -> root.has("diet_logs") && root.has("workout_logs") && root.has("overall_summary");
+                case QUICKLOG -> root.has("diet_logs") && root.has("overall_summary");
                 case DIET -> root.has("items");
                 case SUPPLEMENT -> root.has("answer");
                 case STT -> root.has("text") && root.has("status");

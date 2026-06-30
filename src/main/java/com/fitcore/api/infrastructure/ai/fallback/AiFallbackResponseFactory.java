@@ -31,7 +31,6 @@ public class AiFallbackResponseFactory {
     public String quicklog(StatusReasonCode reason) {
         return toJson(Map.of(
             "diet_logs", List.of(),
-            "workout_logs", List.of(),
             "overall_summary", "\u0041\u0049 \uc11c\ubc84\uac00 \ub2eb\ud600 \uc788\uc5b4 \uae30\ubcf8 \ud30c\uc2f1\uc73c\ub85c \ucc98\ub9ac\ud588\uc2b5\ub2c8\ub2e4.",
             "status", "fallback",
             "fallback_reason", reason.name()
