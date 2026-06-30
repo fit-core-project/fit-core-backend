@@ -17,6 +17,9 @@ public class NutritionTargetResponse {
     private BigDecimal carbsGMax;
     private BigDecimal fatGMin;
     private BigDecimal fatGMax;
+    private BigDecimal sugarMax;
+    private BigDecimal fiberMin;
+    private Integer sodiumMax;
 
     public static NutritionTargetResponse fromEntity(NutritionTargetEntity e) {
         return NutritionTargetResponse.builder()
@@ -27,6 +30,9 @@ public class NutritionTargetResponse {
                 .carbsGMax(e.getCarbsGMax())
                 .fatGMin(e.getFatGMin())
                 .fatGMax(e.getFatGMax())
+                .sugarMax(e.getSugarMax())
+                .fiberMin(e.getFiberMin())
+                .sodiumMax(e.getSodiumMax())
                 .build();
     }
 }

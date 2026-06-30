@@ -49,6 +49,9 @@ public class NutritionTargetService {
                 .carbsGMax(req.getCarbsGMax())
                 .fatGMin(req.getFatGMin())
                 .fatGMax(req.getFatGMax())
+                .sugarMax(req.getSugarMax())
+                .fiberMin(req.getFiberMin())
+                .sodiumMax(req.getSodiumMax())
                 .build();
 
         return NutritionTargetResponse.fromEntity(nutritionTargetRepository.save(entity));

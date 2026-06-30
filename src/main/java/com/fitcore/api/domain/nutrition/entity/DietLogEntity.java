@@ -70,6 +70,15 @@ public class DietLogEntity extends BaseDeleteEntity {
     @Column(name = "fat_g", precision = 6, scale = 1)
     private BigDecimal fatG;
 
+    @Column(name = "sugar_g", precision = 6, scale = 1)
+    private BigDecimal sugarG;
+
+    @Column(name = "fiber_g", precision = 6, scale = 1)
+    private BigDecimal fiberG;
+
+    @Column(name = "sodium_mg")
+    private Integer sodiumMg;
+
     @Column(name = "source", nullable = false, length = 20)
     private String source;
 }

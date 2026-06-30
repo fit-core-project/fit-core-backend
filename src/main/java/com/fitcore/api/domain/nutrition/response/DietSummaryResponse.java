@@ -16,5 +16,8 @@ public class DietSummaryResponse {
     private BigDecimal totalProteinG;
     private BigDecimal totalCarbsG;
     private BigDecimal totalFatG;
+    private BigDecimal totalSugarG;
+    private BigDecimal totalFiberG;
+    private Integer totalSodiumMg;
     private List<DietLogResponse> items;
 }

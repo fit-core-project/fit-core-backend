@@ -23,6 +23,9 @@ public class DietLogResponse {
     private BigDecimal proteinG;
     private BigDecimal carbsG;
     private BigDecimal fatG;
+    private BigDecimal sugarG;
+    private BigDecimal fiberG;
+    private Integer sodiumMg;
     private String source;
 
     public static DietLogResponse fromEntity(DietLogEntity entity) {
@@ -38,6 +41,9 @@ public class DietLogResponse {
                 .proteinG(entity.getProteinG())
                 .carbsG(entity.getCarbsG())
                 .fatG(entity.getFatG())
+                .sugarG(entity.getSugarG())
+                .fiberG(entity.getFiberG())
+                .sodiumMg(entity.getSodiumMg())
                 .source(entity.getSource())
                 .build();
     }

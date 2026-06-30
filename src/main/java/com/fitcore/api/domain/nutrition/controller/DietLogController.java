@@ -2,6 +2,7 @@ package com.fitcore.api.domain.nutrition.controller;
 
 import com.fitcore.api.domain.nutrition.request.DietLogRequest;
 import com.fitcore.api.domain.nutrition.request.DietLogUpdateRequest;
+import com.fitcore.api.domain.nutrition.response.DietDailyAggregationResponse;
 import com.fitcore.api.domain.nutrition.response.DietLogResponse;
 import com.fitcore.api.domain.nutrition.response.DietSummaryResponse;
 import com.fitcore.api.domain.nutrition.service.DietLogService;
@@ -41,6 +42,13 @@ public class DietLogController {
     public ResponseEntity<DietSummaryResponse> getSummary(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(dietLogService.getSummary(date));
+    }
+
+    @GetMapping("/daily-summary")
+    public ResponseEntity<List<DietDailyAggregationResponse>> getDailySummary(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return ResponseEntity.ok(dietLogService.getDailyAggregation(from, to));
     }
 
     @DeleteMapping("/{id}")

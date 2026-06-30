@@ -33,4 +33,13 @@ public class NutritionTargetRequest {
 
     @DecimalMin("0.0") @DecimalMax("1000.0")
     private BigDecimal fatGMax;
+
+    @DecimalMin("0.0") @DecimalMax("500.0")
+    private BigDecimal sugarMax;
+
+    @DecimalMin("0.0") @DecimalMax("200.0")
+    private BigDecimal fiberMin;
+
+    @Min(0) @Max(30000)
+    private Integer sodiumMax;
 }

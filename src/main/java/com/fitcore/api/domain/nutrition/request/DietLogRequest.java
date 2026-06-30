@@ -43,6 +43,15 @@ public class DietLogRequest {
     @DecimalMin("0.0") @DecimalMax("1000.0")
     private BigDecimal fatG;
 
+    @DecimalMin("0.0") @DecimalMax("500.0")
+    private BigDecimal sugarG;
+
+    @DecimalMin("0.0") @DecimalMax("200.0")
+    private BigDecimal fiberG;
+
+    @Min(0) @Max(30000)
+    private Integer sodiumMg;
+
     @NotBlank
     private String source;
 }

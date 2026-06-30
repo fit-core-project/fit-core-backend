@@ -4,6 +4,7 @@ import com.fitcore.api.domain.nutrition.entity.DietLogEntity;
 import com.fitcore.api.domain.nutrition.repository.DietLogRepository;
 import com.fitcore.api.domain.nutrition.request.DietLogRequest;
 import com.fitcore.api.domain.nutrition.request.DietLogUpdateRequest;
+import com.fitcore.api.domain.nutrition.response.DietDailyAggregationResponse;
 import com.fitcore.api.domain.nutrition.response.DietLogResponse;
 import com.fitcore.api.domain.nutrition.response.DietSummaryResponse;
 import com.fitcore.api.global.common.util.SecurityUtils;
@@ -22,6 +23,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
@@ -61,6 +63,12 @@ public class DietLogService {
         BigDecimal totalProtein = sumMacro(sorted, true, false, false);
         BigDecimal totalCarbs   = sumMacro(sorted, false, true, false);
         BigDecimal totalFat     = sumMacro(sorted, false, false, true);
+        BigDecimal totalSugar   = sumDecimal(sorted, e -> e.getSugarG());
+        BigDecimal totalFiber   = sumDecimal(sorted, e -> e.getFiberG());
+        int totalSodium = sorted.stream()
+                .filter(e -> e.getSodiumMg() != null)
+                .mapToInt(DietLogEntity::getSodiumMg)
+                .sum();
 
         return DietSummaryResponse.builder()
                 .date(date)
@@ -68,6 +76,9 @@ public class DietLogService {
                 .totalProteinG(totalProtein.setScale(1, RoundingMode.HALF_UP))
                 .totalCarbsG(totalCarbs.setScale(1, RoundingMode.HALF_UP))
                 .totalFatG(totalFat.setScale(1, RoundingMode.HALF_UP))
+                .totalSugarG(totalSugar.setScale(1, RoundingMode.HALF_UP))
+                .totalFiberG(totalFiber.setScale(1, RoundingMode.HALF_UP))
+                .totalSodiumMg(totalSodium)
                 .items(sorted.stream().map(DietLogResponse::fromEntity).toList())
                 .build();
     }
@@ -80,6 +91,14 @@ public class DietLogService {
                     return e.getFatG();
                 })
                 .map(v -> v != null ? v : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal sumDecimal(List<DietLogEntity> logs,
+                                  Function<DietLogEntity, BigDecimal> getter) {
+        return logs.stream()
+                .map(getter)
+                .filter(v -> v != null)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -99,6 +118,9 @@ public class DietLogService {
                 .proteinG(req.getProteinG())
                 .carbsG(req.getCarbsG())
                 .fatG(req.getFatG())
+                .sugarG(req.getSugarG())
+                .fiberG(req.getFiberG())
+                .sodiumMg(req.getSodiumMg())
                 .source(req.getSource())
                 .build();
     }
@@ -107,20 +129,17 @@ public class DietLogService {
         boolean hasMacros = req.getProteinG() != null || req.getCarbsG() != null || req.getFatG() != null;
 
         if ("ai".equals(req.getSource())) {
-            // ai: 매크로로 4·4·9 강제 (요청 kcal 무시)
-            if (!hasMacros) {
-                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-            }
+            if (!hasMacros) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
             return calculateMacroKcal(req);
         }
 
-        // db / manual: 요청 kcal 우선, 없으면 매크로
-        if (req.getKcal() != null) {
+        if ("db".equals(req.getSource()) && req.getKcal() != null && req.getKcal() > 0) {
             return req.getKcal();
         }
-        if (!hasMacros) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
+
+        // manual (또는 db에 유효 kcal 없는 경우): 입력 kcal 우선, 없으면 4·4·9
+        if (req.getKcal() != null) return req.getKcal();
+        if (!hasMacros) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         return calculateMacroKcal(req);
     }
 
@@ -133,6 +152,12 @@ public class DietLogService {
                 .add(carbs.multiply(CARBS_KCAL_PER_G))
                 .add(fat.multiply(FAT_KCAL_PER_G));
         return total.setScale(0, RoundingMode.HALF_UP).intValue();
+    }
+
+    @Transactional(readOnly = true)
+    public List<DietDailyAggregationResponse> getDailyAggregation(LocalDate from, LocalDate to) {
+        String userId = securityUtils.getCurrentUserId();
+        return dietLogRepository.findDailyAggregation(userId, from, to);
     }
 
     @Transactional

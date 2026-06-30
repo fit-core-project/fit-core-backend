@@ -55,4 +55,13 @@ public class NutritionTargetEntity extends BaseDeleteEntity {
 
     @Column(name = "fat_g_max", precision = 6, scale = 1)
     private BigDecimal fatGMax;
+
+    @Column(name = "sugar_max", precision = 6, scale = 1)
+    private BigDecimal sugarMax;
+
+    @Column(name = "fiber_min", precision = 6, scale = 1)
+    private BigDecimal fiberMin;
+
+    @Column(name = "sodium_max")
+    private Integer sodiumMax;
 }
