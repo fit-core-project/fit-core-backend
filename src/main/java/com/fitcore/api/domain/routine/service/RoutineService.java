@@ -391,6 +391,35 @@ public class RoutineService {
         return MuscleMapper.normalizeTargetMuscles(targetMuscles);
     }
 
+    @Transactional
+    public RoutineDraftResponse createManualDraft(String title) {
+        String userId = securityUtils.getCurrentUserId();
+        String resolvedTitle = (title != null && !title.isBlank()) ? title : "새 루틴";
+
+        AiRoutineResponse manualResponse = new AiRoutineResponse();
+        manualResponse.setSummaryTitle(resolvedTitle);
+        manualResponse.setGenerationStatus(GenerationStatus.success);
+        manualResponse.setStatusReasonCode(StatusReasonCode.none);
+        manualResponse.setIsFallback(false);
+        manualResponse.setTotalEstimatedTime(0);
+        manualResponse.setRationaleSummary(new ArrayList<>());
+        manualResponse.setRoutineBlocks(new ArrayList<>());
+        manualResponse.setWarnings(new ArrayList<>());
+
+        RoutineDraftEntity entity = RoutineDraftEntity.builder()
+            .userId(userId)
+            .generationStatus(GenerationStatus.success)
+            .statusReasonCode(StatusReasonCode.none)
+            .targetSplitLabel("custom")
+            .isFallback(false)
+            .requestPayloadSnapshot(new RoutineGenerateRequest())
+            .responsePayloadSnapshot(manualResponse)
+            .rationaleSummary(new ArrayList<>())
+            .build();
+
+        return RoutineDraftResponse.fromEntity(routineDraftRepository.save(entity));
+    }
+
     // 2. 猷⑦떞 ?뺤젙 (Request -> Entity -> Response)
     @Transactional
     public RoutineFinalResponse finalizeRoutine(String routineDraftId, RoutineFinalRequest request) {

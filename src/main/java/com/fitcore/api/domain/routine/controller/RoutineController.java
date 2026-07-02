@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fitcore.api.domain.routine.request.ManualDraftRequest;
 import com.fitcore.api.domain.routine.request.RoutineFinalRequest;
 import com.fitcore.api.domain.routine.request.RoutineGenerateRequest;
 import com.fitcore.api.domain.routine.response.RoutineDraftResponse;
@@ -36,6 +37,15 @@ public class RoutineController {
         @Valid @RequestBody RoutineGenerateRequest request) {
         RoutineDraftResponse response = routineService.generateRoutine(request);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/drafts/manual")
+    @Operation(summary = "수동 루틴 초안 생성", description = "AI 없이 빈 루틴 초안을 생성합니다.")
+    public ResponseEntity<RoutineDraftResponse> createManualDraft(
+        @Valid @RequestBody(required = false) ManualDraftRequest request
+    ) {
+        String title = request != null ? request.getTitle() : null;
+        return ResponseEntity.ok(routineService.createManualDraft(title));
     }
 
     @PostMapping("/drafts/{routineDraftId}/finalize")
