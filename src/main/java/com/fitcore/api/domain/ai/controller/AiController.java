@@ -93,7 +93,9 @@ public class AiController {
                         if (node.has("llm")) {
                             llmStatus = node.get("llm").asText("unknown");
                         }
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        log.debug("event=ai_health_json_parse_skip reason={}", e.getClass().getSimpleName());
+                    }
                 }
             }
         } catch (Exception e) {
@@ -179,8 +181,8 @@ public class AiController {
             try {
                 outboundBody = objectMapper.writeValueAsString(objectMapper.readTree(body));
                 parsedJson = true;
-            } catch (Exception ignored) {
-                // Keep the existing raw forwarding path for malformed payloads so fallback classification is unchanged.
+            } catch (Exception e) {
+                log.debug("event=ai_proxy_json_reserialize_skip endpoint={} reason={} raw_body_length={}", endpoint.logName, e.getClass().getSimpleName(), body.length());
             }
 
             ResponseEntity<String> response = aiRestClient.post()
