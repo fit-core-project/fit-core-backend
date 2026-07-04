@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,12 +49,17 @@ public class RoutineProgramService {
         String userId = securityUtils.getCurrentUserId();
         validateCreateRequest(request, userId);
 
-        RoutineProgramEntity program = programRepository.save(RoutineProgramEntity.builder()
-            .userId(userId)
-            .name(request.getName().trim())
-            .status(RoutineProgramStatus.ACTIVE)
-            .currentPosition(1)
-            .build());
+        RoutineProgramEntity program;
+        try {
+            program = programRepository.saveAndFlush(RoutineProgramEntity.builder()
+                .userId(userId)
+                .name(request.getName().trim())
+                .status(RoutineProgramStatus.ACTIVE)
+                .currentPosition(1)
+                .build());
+        } catch (DataIntegrityViolationException e) {
+            throw ProgramException.conflict("Active program already exists.");
+        }
 
         Map<String, RoutineFinalEntity> routinesById = loadOwnedRoutines(request.getRoutineFinalIds(), userId);
         for (int i = 0; i < request.getRoutineFinalIds().size(); i++) {

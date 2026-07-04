@@ -178,6 +178,36 @@ class RoutineProgramServiceTest {
     }
 
     @Test
+    void createProgram_allowsNewActiveAfterArchive() {
+        when(securityUtils.getCurrentUserId()).thenReturn("user-a");
+        RoutineFinalEntity push = saveFinal("user-a", "push", "Push", 45);
+        RoutineFinalEntity pull = saveFinal("user-a", "pull", "Pull", 50);
+
+        ProgramDetailResponse first = programService.createProgram(createRequest("PPL", push.getId(), pull.getId()));
+        programService.archiveProgram(first.getProgramId());
+
+        ProgramDetailResponse second = programService.createProgram(createRequest("PPL2", push.getId(), pull.getId()));
+        assertThat(second.getStatus()).isEqualTo("ACTIVE");
+    }
+
+    @Test
+    void createProgram_differentUsersCanEachHaveActiveProgram() {
+        RoutineFinalEntity pushA = saveFinal("user-a", "push", "Push", 45);
+        RoutineFinalEntity pullA = saveFinal("user-a", "pull", "Pull", 50);
+        RoutineFinalEntity pushB = saveFinal("user-b", "push", "Push", 45);
+        RoutineFinalEntity pullB = saveFinal("user-b", "pull", "Pull", 50);
+
+        when(securityUtils.getCurrentUserId()).thenReturn("user-a");
+        ProgramDetailResponse forA = programService.createProgram(createRequest("A", pushA.getId(), pullA.getId()));
+
+        when(securityUtils.getCurrentUserId()).thenReturn("user-b");
+        ProgramDetailResponse forB = programService.createProgram(createRequest("B", pushB.getId(), pullB.getId()));
+
+        assertThat(forA.getStatus()).isEqualTo("ACTIVE");
+        assertThat(forB.getStatus()).isEqualTo("ACTIVE");
+    }
+
+    @Test
     void workoutSaveRejectsMismatchedProgramContext() {
         when(securityUtils.getCurrentUserId()).thenReturn("user-a");
         RoutineFinalEntity push = saveFinal("user-a", "push", "Push", 45);
