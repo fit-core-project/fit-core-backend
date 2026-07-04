@@ -23,6 +23,7 @@ import com.fitcore.api.domain.program.repository.RoutineProgramCompletionEventRe
 import com.fitcore.api.domain.program.repository.RoutineProgramItemRepository;
 import com.fitcore.api.domain.program.repository.RoutineProgramRepository;
 import com.fitcore.api.domain.program.request.ProgramCreateRequest;
+import com.fitcore.api.domain.program.request.ProgramUpdateRequest;
 import com.fitcore.api.domain.program.response.ProgramDetailResponse;
 import com.fitcore.api.domain.program.response.ProgramSummaryResponse;
 import com.fitcore.api.domain.program.service.RoutineProgramService;
@@ -237,6 +238,50 @@ class RoutineProgramServiceTest {
     }
 
     @Test
+    void updateProgram_renamesProgramOnly() {
+        when(securityUtils.getCurrentUserId()).thenReturn("user-a");
+        RoutineFinalEntity push = saveFinal("user-a", "push", "Push", 45);
+        RoutineFinalEntity pull = saveFinal("user-a", "pull", "Pull", 50);
+        ProgramDetailResponse created = programService.createProgram(createRequest("PPL", push.getId(), pull.getId()));
+
+        ProgramDetailResponse updated = programService.updateProgram(created.getProgramId(), updateRequest("  PPL 2  "));
+
+        assertThat(updated.getName()).isEqualTo("PPL 2");
+        assertThat(updated.getStatus()).isEqualTo("ACTIVE");
+        assertThat(updated.getItems()).extracting("routineFinalId").containsExactly(push.getId(), pull.getId());
+        assertThatThrownBy(() -> programService.updateProgram(created.getProgramId(), updateRequest(" ")))
+            .isInstanceOf(ProgramException.class);
+
+        when(securityUtils.getCurrentUserId()).thenReturn("user-b");
+        assertThatThrownBy(() -> programService.updateProgram(created.getProgramId(), updateRequest("Other")))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void deleteProgramPermanently_allowsOnlyArchivedProgramsAndKeepsRoutineFinals() {
+        when(securityUtils.getCurrentUserId()).thenReturn("user-a");
+        RoutineFinalEntity push = saveFinal("user-a", "push", "Push", 45);
+        RoutineFinalEntity pull = saveFinal("user-a", "pull", "Pull", 50);
+        ProgramDetailResponse created = programService.createProgram(createRequest("PPL", push.getId(), pull.getId()));
+
+        assertThatThrownBy(() -> programService.deleteProgramPermanently(created.getProgramId()))
+            .isInstanceOf(ProgramException.class);
+
+        saveWorkout(push.getId(), created.getProgramId(), created.getItems().get(0).getProgramItemId());
+        programService.archiveProgram(created.getProgramId());
+        assertThat(eventRepository.findByProgram_Id(created.getProgramId())).hasSize(1);
+        assertThat(itemRepository.findByProgram_IdOrderByPositionAsc(created.getProgramId())).hasSize(2);
+
+        programService.deleteProgramPermanently(created.getProgramId());
+
+        assertThat(programRepository.findById(created.getProgramId())).isEmpty();
+        assertThat(eventRepository.findByProgram_Id(created.getProgramId())).isEmpty();
+        assertThat(itemRepository.findByProgram_IdOrderByPositionAsc(created.getProgramId())).isEmpty();
+        assertThat(routineFinalRepository.findById(push.getId())).isPresent();
+        assertThat(routineFinalRepository.findById(pull.getId())).isPresent();
+    }
+
+    @Test
     void createProgram_differentUsersCanEachHaveActiveProgram() {
         RoutineFinalEntity pushA = saveFinal("user-a", "push", "Push", 45);
         RoutineFinalEntity pullA = saveFinal("user-a", "pull", "Pull", 50);
@@ -310,6 +355,12 @@ class RoutineProgramServiceTest {
         ProgramCreateRequest request = new ProgramCreateRequest();
         request.setName(name);
         request.setRoutineFinalIds(List.of(routineFinalIds));
+        return request;
+    }
+
+    private ProgramUpdateRequest updateRequest(String name) {
+        ProgramUpdateRequest request = new ProgramUpdateRequest();
+        request.setName(name);
         return request;
     }
 

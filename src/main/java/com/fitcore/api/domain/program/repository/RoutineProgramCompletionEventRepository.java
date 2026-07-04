@@ -12,4 +12,6 @@ public interface RoutineProgramCompletionEventRepository extends JpaRepository<R
     boolean existsByProgram_IdAndProgramItem_Id(String programId, String programItemId);
 
     List<RoutineProgramCompletionEventEntity> findByProgram_Id(String programId);
+
+    void deleteByProgram_Id(String programId);
 }

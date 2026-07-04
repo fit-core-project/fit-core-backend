@@ -23,6 +23,7 @@ import com.fitcore.api.domain.program.repository.RoutineProgramCompletionEventRe
 import com.fitcore.api.domain.program.repository.RoutineProgramItemRepository;
 import com.fitcore.api.domain.program.repository.RoutineProgramRepository;
 import com.fitcore.api.domain.program.request.ProgramCreateRequest;
+import com.fitcore.api.domain.program.request.ProgramUpdateRequest;
 import com.fitcore.api.domain.program.response.ProgramDetailResponse;
 import com.fitcore.api.domain.program.response.ProgramItemResponse;
 import com.fitcore.api.domain.program.response.ProgramSummaryResponse;
@@ -95,6 +96,17 @@ public class RoutineProgramService {
     }
 
     @Transactional
+    public ProgramDetailResponse updateProgram(String programId, ProgramUpdateRequest request) {
+        String userId = securityUtils.getCurrentUserId();
+        if (request == null || isBlank(request.getName())) {
+            throw ProgramException.badRequest("Program name must not be blank.");
+        }
+        RoutineProgramEntity program = getOwnedProgram(programId, userId);
+        program.rename(request.getName().trim());
+        return toDetailResponse(program);
+    }
+
+    @Transactional
     public ProgramDetailResponse archiveProgram(String programId) {
         String userId = securityUtils.getCurrentUserId();
         RoutineProgramEntity program = getOwnedProgram(programId, userId);
@@ -122,6 +134,18 @@ public class RoutineProgramService {
             throw ProgramException.conflict("Active program already exists.");
         }
         return toDetailResponse(program);
+    }
+
+    @Transactional
+    public void deleteProgramPermanently(String programId) {
+        String userId = securityUtils.getCurrentUserId();
+        RoutineProgramEntity program = getOwnedProgram(programId, userId);
+        if (program.getStatus() != RoutineProgramStatus.ARCHIVED) {
+            throw ProgramException.conflict("Only archived programs can be permanently deleted.");
+        }
+        eventRepository.deleteByProgram_Id(program.getId());
+        itemRepository.deleteByProgram_Id(program.getId());
+        programRepository.delete(program);
     }
 
     @Transactional

@@ -13,4 +13,6 @@ public interface RoutineProgramItemRepository extends JpaRepository<RoutineProgr
     Optional<RoutineProgramItemEntity> findByProgram_IdAndPosition(String programId, int position);
 
     long countByProgram_Id(String programId);
+
+    void deleteByProgram_Id(String programId);
 }

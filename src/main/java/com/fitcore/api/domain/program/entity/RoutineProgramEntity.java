@@ -74,4 +74,8 @@ public class RoutineProgramEntity {
     public void activate() {
         this.status = RoutineProgramStatus.ACTIVE;
     }
+
+    public void rename(String name) {
+        this.name = name;
+    }
 }

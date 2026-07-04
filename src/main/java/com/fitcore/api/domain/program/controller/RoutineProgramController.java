@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fitcore.api.domain.program.request.ProgramCreateRequest;
+import com.fitcore.api.domain.program.request.ProgramUpdateRequest;
 import com.fitcore.api.domain.program.response.ProgramDetailResponse;
 import com.fitcore.api.domain.program.response.ProgramSummaryResponse;
 import com.fitcore.api.domain.program.service.RoutineProgramService;
@@ -45,6 +46,14 @@ public class RoutineProgramController {
         return ResponseEntity.ok(programService.getProgram(programId));
     }
 
+    @PatchMapping("/{programId}")
+    public ResponseEntity<ProgramDetailResponse> updateProgram(
+        @PathVariable String programId,
+        @Valid @RequestBody ProgramUpdateRequest request
+    ) {
+        return ResponseEntity.ok(programService.updateProgram(programId, request));
+    }
+
     @GetMapping
     public ResponseEntity<List<ProgramSummaryResponse>> getPrograms() {
         return ResponseEntity.ok(programService.getPrograms());
@@ -53,6 +62,12 @@ public class RoutineProgramController {
     @DeleteMapping("/{programId}")
     public ResponseEntity<ProgramDetailResponse> archiveProgram(@PathVariable String programId) {
         return ResponseEntity.ok(programService.archiveProgram(programId));
+    }
+
+    @DeleteMapping("/{programId}/permanent")
+    public ResponseEntity<Void> deleteProgramPermanently(@PathVariable String programId) {
+        programService.deleteProgramPermanently(programId);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{programId}/activate")
