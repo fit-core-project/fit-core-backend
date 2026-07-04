@@ -70,4 +70,8 @@ public class RoutineProgramEntity {
     public void archive() {
         this.status = RoutineProgramStatus.ARCHIVED;
     }
+
+    public void activate() {
+        this.status = RoutineProgramStatus.ACTIVE;
+    }
 }

@@ -102,6 +102,61 @@ class RoutineProgramConcurrencyTest {
         assertThat(conflicts.get()).isEqualTo(threads - 1);
     }
 
+    @Test
+    void concurrentActivateProgram_allowsExactlyOneActive() throws InterruptedException {
+        when(securityUtils.getCurrentUserId()).thenReturn("activate-user");
+
+        RoutineFinalEntity push = saveFinal("activate-user", "push", "Push", 45);
+        RoutineFinalEntity pull = saveFinal("activate-user", "pull", "Pull", 50);
+
+        int threads = 5;
+        List<String> archivedProgramIds = new java.util.ArrayList<>();
+        for (int i = 0; i < threads; i++) {
+            var created = programService.createProgram(createRequest("Archived-" + i, push.getId(), pull.getId()));
+            programService.archiveProgram(created.getProgramId());
+            archivedProgramIds.add(created.getProgramId());
+        }
+
+        CountDownLatch ready = new CountDownLatch(threads);
+        CountDownLatch start = new CountDownLatch(1);
+        AtomicInteger successes = new AtomicInteger(0);
+        AtomicInteger conflicts = new AtomicInteger(0);
+
+        ExecutorService executor = Executors.newFixedThreadPool(threads);
+        for (String programId : archivedProgramIds) {
+            executor.submit(() -> {
+                ready.countDown();
+                try {
+                    start.await();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+                try {
+                    programService.activateProgram(programId);
+                    successes.incrementAndGet();
+                } catch (ProgramException e) {
+                    conflicts.incrementAndGet();
+                } catch (Exception ignored) {
+                    conflicts.incrementAndGet();
+                }
+            });
+        }
+
+        ready.await();
+        start.countDown();
+        executor.shutdown();
+        executor.awaitTermination(10, java.util.concurrent.TimeUnit.SECONDS);
+
+        long activeCount = programRepository.findByUserIdOrderByCreatedAtDesc("activate-user").stream()
+            .filter(p -> p.getStatus() == RoutineProgramStatus.ACTIVE)
+            .count();
+
+        assertThat(activeCount).isEqualTo(1);
+        assertThat(successes.get()).isEqualTo(1);
+        assertThat(conflicts.get()).isEqualTo(threads - 1);
+    }
+
     private ProgramCreateRequest createRequest(String name, String... routineFinalIds) {
         ProgramCreateRequest request = new ProgramCreateRequest();
         request.setName(name);

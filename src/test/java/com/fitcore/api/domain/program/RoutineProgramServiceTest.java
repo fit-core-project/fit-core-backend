@@ -191,6 +191,52 @@ class RoutineProgramServiceTest {
     }
 
     @Test
+    void activateProgram_restoresArchivedProgramWithoutChangingCursorOrItems() {
+        when(securityUtils.getCurrentUserId()).thenReturn("user-a");
+        RoutineFinalEntity push = saveFinal("user-a", "push", "Push", 45);
+        RoutineFinalEntity pull = saveFinal("user-a", "pull", "Pull", 50);
+        ProgramDetailResponse created = programService.createProgram(createRequest("PPL", push.getId(), pull.getId()));
+        saveWorkout(push.getId(), created.getProgramId(), created.getItems().get(0).getProgramItemId());
+        programService.archiveProgram(created.getProgramId());
+
+        ProgramDetailResponse activated = programService.activateProgram(created.getProgramId());
+
+        assertThat(activated.getStatus()).isEqualTo("ACTIVE");
+        assertThat(activated.getCurrentPosition()).isEqualTo(2);
+        assertThat(activated.getCompletedAt()).isNull();
+        assertThat(activated.getItems()).hasSize(2);
+        assertThat(activated.getItems()).extracting("state").containsExactly("DONE", "CURRENT");
+        assertThat(programService.getActiveProgram().orElseThrow().getProgramId()).isEqualTo(created.getProgramId());
+    }
+
+    @Test
+    void activateProgram_rejectsActiveCompletedOtherUserAndExistingActiveConflict() {
+        when(securityUtils.getCurrentUserId()).thenReturn("user-a");
+        RoutineFinalEntity push = saveFinal("user-a", "push", "Push", 45);
+        RoutineFinalEntity pull = saveFinal("user-a", "pull", "Pull", 50);
+        RoutineFinalEntity legs = saveFinal("user-a", "legs", "Legs", 55);
+        ProgramDetailResponse active = programService.createProgram(createRequest("PPL", push.getId(), pull.getId()));
+
+        assertThatThrownBy(() -> programService.activateProgram(active.getProgramId()))
+            .isInstanceOf(ProgramException.class);
+
+        saveWorkout(push.getId(), active.getProgramId(), active.getItems().get(0).getProgramItemId());
+        saveWorkout(pull.getId(), active.getProgramId(), active.getItems().get(1).getProgramItemId());
+        assertThatThrownBy(() -> programService.activateProgram(active.getProgramId()))
+            .isInstanceOf(ProgramException.class);
+
+        ProgramDetailResponse archived = programService.createProgram(createRequest("Archived", push.getId(), legs.getId()));
+        programService.archiveProgram(archived.getProgramId());
+        programService.createProgram(createRequest("Current", pull.getId(), legs.getId()));
+        assertThatThrownBy(() -> programService.activateProgram(archived.getProgramId()))
+            .isInstanceOf(ProgramException.class);
+
+        when(securityUtils.getCurrentUserId()).thenReturn("user-b");
+        assertThatThrownBy(() -> programService.activateProgram(archived.getProgramId()))
+            .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
     void createProgram_differentUsersCanEachHaveActiveProgram() {
         RoutineFinalEntity pushA = saveFinal("user-a", "push", "Push", 45);
         RoutineFinalEntity pullA = saveFinal("user-a", "pull", "Pull", 50);

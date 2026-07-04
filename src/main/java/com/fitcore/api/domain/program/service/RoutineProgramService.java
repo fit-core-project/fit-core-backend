@@ -106,6 +106,25 @@ public class RoutineProgramService {
     }
 
     @Transactional
+    public ProgramDetailResponse activateProgram(String programId) {
+        String userId = securityUtils.getCurrentUserId();
+        RoutineProgramEntity program = getOwnedProgram(programId, userId);
+        if (program.getStatus() != RoutineProgramStatus.ARCHIVED) {
+            throw ProgramException.conflict("Only archived programs can be activated.");
+        }
+        if (programRepository.existsByUserIdAndStatus(userId, RoutineProgramStatus.ACTIVE)) {
+            throw ProgramException.conflict("Active program already exists.");
+        }
+        try {
+            program.activate();
+            programRepository.saveAndFlush(program);
+        } catch (DataIntegrityViolationException e) {
+            throw ProgramException.conflict("Active program already exists.");
+        }
+        return toDetailResponse(program);
+    }
+
+    @Transactional
     public void completeCurrentItemAfterWorkout(
         String programId,
         String programItemId,
