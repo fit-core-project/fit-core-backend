@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fitcore.api.domain.exercise.entity.ExerciseTierEntity;
 import com.fitcore.api.domain.exercise.repository.ExerciseTierRepository;
+import com.fitcore.api.domain.program.service.RoutineProgramService;
 import com.fitcore.api.domain.routine.dto.Doms;
 import com.fitcore.api.domain.user.components.UserComponent;
 import com.fitcore.api.domain.user.entity.UserProfileEntity;
@@ -53,6 +54,7 @@ public class WorkoutSessionService {
     private final UserComponent userComponent;
     private final ExerciseTierRepository exerciseTierRepository;
     private final UserRepository userRepository;
+    private final RoutineProgramService routineProgramService;
 
     /**
      * 운동 세션 및 세트 생성
@@ -103,6 +105,14 @@ public class WorkoutSessionService {
 
         // 3. 저장 (Cascade 설정으로 인해 세션만 저장해도 세트가 함께 저장됨)
         WorkoutSessionEntity savedSession = sessionRepository.save(session);
+
+        routineProgramService.completeCurrentItemAfterWorkout(
+            request.getProgramId(),
+            request.getProgramItemId(),
+            request.getSourceRoutineFinalId(),
+            savedSession,
+            userId
+        );
 
         // 4. 운동한 근육을 DOMS level 2(moderate)로 기록
         updateDomsAfterWorkout(userId, request);

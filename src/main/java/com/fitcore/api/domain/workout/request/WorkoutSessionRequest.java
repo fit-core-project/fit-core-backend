@@ -22,6 +22,8 @@ public class WorkoutSessionRequest {
     private LocalDate workoutDate;
     private String splitLabel;
     private String sourceRoutineFinalId;
+    private String programId;
+    private String programItemId;
     private Short timeAvailableMin;
     private Short durationMin;
     private String readinessLevel = "normal"; // 기본값

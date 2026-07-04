@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.stream.Collectors;
 
+import com.fitcore.api.domain.program.exception.ProgramException;
 import com.fitcore.api.global.common.response.ErrorResponse;
 import com.fitcore.api.global.error.exception.BusinessException;
 
@@ -40,6 +41,18 @@ public class GlobalExceptionHandler {
             message.isBlank() ? ErrorCode.INVALID_INPUT_VALUE.getMessage() : message
         );
         return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(ProgramException.class)
+    protected ResponseEntity<ErrorResponse> handleProgramException(ProgramException e) {
+        log.error("ProgramException: {}", e.getMessage());
+        ErrorResponse response = ErrorResponse.builder()
+            .status(e.getStatus().value())
+            .error(e.getStatus().name())
+            .code(e.getCode())
+            .message(e.getMessage())
+            .build();
+        return ResponseEntity.status(e.getStatus()).body(response);
     }
 
     // 2. 일반적인 모든 예외(Exception) 처리 (최후의 보루)
