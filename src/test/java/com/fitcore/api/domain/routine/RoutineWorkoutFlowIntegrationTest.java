@@ -24,6 +24,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -196,7 +197,10 @@ class RoutineWorkoutFlowIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.routineBlocks[0].primaryMuscles[0]").value("chest"))
             .andExpect(jsonPath("$.routineBlocks[0].primaryMuscles[1]").value("triceps"))
-            .andExpect(jsonPath("$.routineBlocks[0].equipmentType").value("BODYWEIGHT"));
+            .andExpect(jsonPath("$.routineBlocks[0].equipmentType").value("BODYWEIGHT"))
+            // exerciseName is the Korean catalog name (exercise_tier.name_kr), not name_en.
+            .andExpect(jsonPath("$.routineBlocks[0].exerciseName").value(matchesPattern(".*[가-힣].*")))
+            .andExpect(jsonPath("$.rationaleSummary[0]").value(matchesPattern("^[^A-Za-z]*(AI[^A-Za-z]*)*$")));
     }
 
     private AiRoutineResponse successAiResponse() {

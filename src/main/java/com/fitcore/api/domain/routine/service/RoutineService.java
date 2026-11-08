@@ -127,7 +127,7 @@ public class RoutineService {
             response.setIsFallback(false);
             response.setTotalEstimatedTime(0);
             response.setSummaryTitle("루틴을 만들 수 없음");
-            response.setRationaleSummary(List.of("선택한 운동 부위, 통증, DOMS, 사용 불가 장비 조건을 모두 적용한 결과 사용 가능한 운동 후보가 없습니다."));
+            response.setRationaleSummary(List.of("선택한 운동 부위, 통증, 근육통, 사용 불가 장비 조건을 모두 적용한 결과 사용 가능한 운동 후보가 없습니다."));
             response.setWarnings(List.of("운동 부위 또는 장비 조건을 변경한 뒤 다시 생성해 주세요."));
             log.warn("event=ai_fallback_empty_candidate reason_category={} fallback_used=false", reasonCode.name());
         } else {
@@ -154,13 +154,13 @@ public class RoutineService {
 
         Map<String, FallbackExercise> templates = new LinkedHashMap<>();
         templates.put("push", new FallbackExercise(
-            "47", "Push-up", "horizontalPush", List.of("chest", "triceps"), "BODYWEIGHT", 3, 10, 90));
+            "47", "푸시업", "horizontalPush", List.of("chest", "triceps"), "BODYWEIGHT", 3, 10, 90));
         templates.put("pull", new FallbackExercise(
-            "65", "Inverted Row", "horizontalPull", List.of("upper-back", "biceps"), "BODYWEIGHT", 3, 10, 90));
+            "65", "인버티드 로우", "horizontalPull", List.of("upper-back", "biceps"), "BODYWEIGHT", 3, 10, 90));
         templates.put("legs", new FallbackExercise(
-            "118", "Bodyweight Squat", "squat", List.of("quadriceps", "gluteal"), "BODYWEIGHT", 3, 12, 75));
+            "118", "맨몸 스쿼트", "squat", List.of("quadriceps", "gluteal"), "BODYWEIGHT", 3, 12, 75));
         templates.put("core", new FallbackExercise(
-            "120", "Plank", "antiExtension", List.of("abs"), "BODYWEIGHT", 3, 30, 60));
+            "120", "플랭크", "antiExtension", List.of("abs"), "BODYWEIGHT", 3, 30, 60));
 
         List<FallbackExercise> selected = new ArrayList<>();
         String split = request.getTargetSplitLabel() == null ? "" : request.getTargetSplitLabel().trim().toLowerCase();
@@ -248,7 +248,7 @@ public class RoutineService {
         Set<String> painAreas,
         Set<String> unavailableEquipment
     ) {
-        if (exercise.getPrimaryMuscle() == null || exercise.getNameEn() == null) {
+        if (exercise.getPrimaryMuscle() == null || displayName(exercise) == null) {
             return false;
         }
         if (!targetMuscles.isEmpty() && !targetMuscles.contains(exercise.getPrimaryMuscle())) {
@@ -284,7 +284,7 @@ public class RoutineService {
     private FallbackExercise toFallbackExercise(ExerciseTierEntity exercise) {
         return new FallbackExercise(
             String.valueOf(exercise.getId()),
-            exercise.getNameEn(),
+            displayName(exercise),
             null,
             collectMuscles(exercise),
             exercise.getEquipmentReq(),
@@ -292,6 +292,17 @@ public class RoutineService {
             "STATIC".equalsIgnoreCase(exercise.getMovementType()) ? 30 : 10,
             75
         );
+    }
+
+    /** User-facing exercise name: Korean catalog name (name_kr), then name_en. */
+    private String displayName(ExerciseTierEntity exercise) {
+        if (exercise.getNameKr() != null && !exercise.getNameKr().isBlank()) {
+            return exercise.getNameKr().trim();
+        }
+        if (exercise.getNameEn() != null && !exercise.getNameEn().isBlank()) {
+            return exercise.getNameEn().trim();
+        }
+        return null;
     }
 
     private List<String> collectMuscles(ExerciseTierEntity exercise) {
