@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
@@ -47,11 +48,31 @@ public class JwtFilter extends GenericFilterBean {
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);
         } else if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-            Authentication authentication = tokenProvider.getAuthentication(jwt);
+            Authentication authentication;
+            try {
+                authentication = tokenProvider.getAuthentication(jwt);
+            } catch (AuthenticationException e) {
+                // 서명·만료는 유효하지만 사용자가 탈퇴(soft delete)했거나 다른 계정이 된 토큰.
+                // 익명으로 흘려보내면 엔트리포인트에 따라 302/403이 섞이므로 여기서 401로 끊는다.
+                // sendError는 /error 재디스패치에서 다시 인증 검사를 타므로 본문을 직접 쓴다.
+                SecurityContextHolder.clearContext();
+                writeInactiveUserResponse(httpServletResponse);
+                return;
+            }
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
         chain.doFilter(request, response);
+    }
+
+    private void writeInactiveUserResponse(HttpServletResponse response) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.getWriter().write(
+            "{\"status\":401,\"error\":\"UNAUTHORIZED\",\"code\":\"U003\","
+                + "\"message\":\"탈퇴했거나 더 이상 유효하지 않은 계정입니다. 다시 로그인해 주세요.\"}"
+        );
     }
 
     private String resolveToken(HttpServletRequest request) {

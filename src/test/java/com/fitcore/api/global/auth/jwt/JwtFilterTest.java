@@ -21,6 +21,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -85,6 +86,25 @@ class JwtFilterTest {
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isSameAs(authentication);
         verify(tokenProvider).validateToken(jwt);
         verify(tokenProvider).getAuthentication(jwt);
+    }
+
+    @Test
+    void validJwtOfWithdrawnUserIsRejectedWith401AndChainStops() throws Exception {
+        String jwt = "withdrawn.jwt.token";
+        when(tokenProvider.validateToken(jwt)).thenReturn(true);
+        when(tokenProvider.getAuthentication(jwt)).thenThrow(new UsernameNotFoundException("gone"));
+
+        JwtFilter filter = new JwtFilter(tokenProvider, false);
+        MockHttpServletRequest request = requestWithBearer(jwt);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertThat(response.getStatus()).isEqualTo(401);
+        assertThat(response.getContentAsString()).contains("\"code\":\"U003\"");
+        assertThat(chain.getRequest()).isNull();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
     private MockHttpServletRequest requestWithBearer(String token) {

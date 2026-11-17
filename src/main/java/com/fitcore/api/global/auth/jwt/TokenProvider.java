@@ -31,6 +31,7 @@ import com.fitcore.api.global.auth.PrincipalDetails;
 
 @Component
 public class TokenProvider {
+    static final String USER_ID_CLAIM = "uid";
     private final String secret;
     private final long tokenValidityInMilliseconds;
     private Key key; // 변환된 Key 객체 저장
@@ -61,10 +62,18 @@ public class TokenProvider {
         long now = (new Date()).getTime();
         Date validity = new Date(now + this.tokenValidityInMilliseconds);
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
             .setSubject(authentication.getName()) // 보통 email이 들어감
             .claim("auth", authorities)          // 권한 정보 (ROLE_USER 등)
-            .claim("profileImage", profileImageUrl)
+            .claim("profileImage", profileImageUrl);
+
+        // 탈퇴 후 같은 이메일로 재가입하면 예전 토큰이 새 계정으로 인증되지 않도록 userId를 함께 싣는다.
+        if (authentication.getPrincipal() instanceof PrincipalDetails details && details.getUser() != null
+            && details.getUser().getUserId() != null) {
+            builder.claim(USER_ID_CLAIM, details.getUser().getUserId());
+        }
+
+        return builder
             .signWith(key, SignatureAlgorithm.HS512)
             .setExpiration(validity)
             .compact();
@@ -82,8 +91,15 @@ public class TokenProvider {
         String email = claims.getSubject();
 
         // 2) DB에서 UserProfileEntity 조회
+        // @SoftDelete로 탈퇴(삭제)한 사용자는 조회되지 않으므로, 만료 전 토큰이라도 여기서 거부된다.
         UserProfileEntity user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
+            .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+
+        // userId 클레임이 있는 토큰은 발급 당시 계정과 같아야 한다 (탈퇴 후 재가입한 새 계정으로 넘어가지 않게).
+        Object tokenUserId = claims.get(USER_ID_CLAIM);
+        if (tokenUserId != null && !tokenUserId.toString().equals(user.getUserId())) {
+            throw new UsernameNotFoundException("토큰의 사용자가 현재 계정과 다릅니다.");
+        }
 
         // 3) PrincipalDetails 객체 생성 (우리가 만든 객체)
         PrincipalDetails principalDetails = new PrincipalDetails(user);
