@@ -1,6 +1,5 @@
 package com.fitcore.api.global.auth.jwt;
 
-import lombok.RequiredArgsConstructor;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,11 +21,25 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 
-@RequiredArgsConstructor
 public class JwtFilter extends GenericFilterBean {
     public static final String AUTHORIZATION_HEADER = "Authorization";
     private final TokenProvider tokenProvider;
     private final boolean demoTokenEnabled;
+    /**
+     * The demo token is unsigned and its shape ships in the public frontend bundle, so anyone can mint one.
+     * It is ROLE_USER only unless this is explicitly turned on (local/dev admin demos); never enable it in prod.
+     */
+    private final boolean demoTokenAdminEnabled;
+
+    public JwtFilter(TokenProvider tokenProvider, boolean demoTokenEnabled) {
+        this(tokenProvider, demoTokenEnabled, false);
+    }
+
+    public JwtFilter(TokenProvider tokenProvider, boolean demoTokenEnabled, boolean demoTokenAdminEnabled) {
+        this.tokenProvider = tokenProvider;
+        this.demoTokenEnabled = demoTokenEnabled;
+        this.demoTokenAdminEnabled = demoTokenAdminEnabled;
+    }
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -44,7 +57,9 @@ public class JwtFilter extends GenericFilterBean {
             Authentication authentication = new UsernamePasswordAuthenticationToken(
                 "demo-user-001",
                 jwt,
-                List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"))
+                demoTokenAdminEnabled
+                    ? List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"))
+                    : List.of(new SimpleGrantedAuthority("ROLE_USER"))
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);
         } else if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {

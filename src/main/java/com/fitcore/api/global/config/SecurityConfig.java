@@ -41,6 +41,9 @@ public class SecurityConfig {
     @Value("${app.auth.demo-token-enabled:false}")
     private boolean demoTokenEnabled;
 
+    @Value("${app.auth.demo-token-admin-enabled:false}")
+    private boolean demoTokenAdminEnabled;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -81,7 +84,7 @@ public class SecurityConfig {
 
         http
             // JWT 필터 추가
-            .addFilterBefore(new JwtFilter(tokenProvider, demoTokenEnabled), UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(new JwtFilter(tokenProvider, demoTokenEnabled, demoTokenAdminEnabled), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

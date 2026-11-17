@@ -49,8 +49,25 @@ class JwtFilterTest {
     }
 
     @Test
-    void demoTokenAuthenticatesWhenEnabled() throws Exception {
+    void demoTokenIsUserOnlyByDefault() throws Exception {
         JwtFilter filter = new JwtFilter(tokenProvider, true);
+        MockHttpServletRequest request = requestWithBearer(demoToken());
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, new MockFilterChain());
+
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(authentication).isNotNull();
+        assertThat(authentication.getAuthorities())
+            .extracting("authority")
+            .containsExactly("ROLE_USER");
+        verifyNoInteractions(tokenProvider);
+    }
+
+    @Test
+    void demoTokenGetsAdminOnlyWhenAdminFlagIsOn() throws Exception {
+        JwtFilter filter = new JwtFilter(tokenProvider, true, true);
         MockHttpServletRequest request = requestWithBearer(demoToken());
         MockHttpServletResponse response = new MockHttpServletResponse();
 
