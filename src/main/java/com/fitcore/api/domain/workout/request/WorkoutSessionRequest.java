@@ -12,6 +12,7 @@ import com.fitcore.api.domain.routine.dto.Doms;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 @Getter
 @Setter
@@ -27,6 +28,10 @@ public class WorkoutSessionRequest {
     private Short timeAvailableMin;
     private Short durationMin;
     private String readinessLevel = "normal"; // 기본값
+
+    /** Optional free-text note on the whole session (summary screen). */
+    @Size(max = 1000)
+    private String sessionNote;
 
     // JSON 필드 (프론트에서 Map 형태로 전송)
     private List<String> currentPainAreas;

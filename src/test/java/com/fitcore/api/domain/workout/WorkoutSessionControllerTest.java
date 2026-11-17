@@ -188,6 +188,29 @@ class WorkoutSessionControllerTest {
     }
 
     @Test
+    void createWorkout_sessionNote_isPassedToService() throws Exception {
+        org.mockito.ArgumentCaptor<com.fitcore.api.domain.workout.request.WorkoutSessionRequest> captor =
+            org.mockito.ArgumentCaptor.forClass(com.fitcore.api.domain.workout.request.WorkoutSessionRequest.class);
+        when(workoutSessionService.createWorkoutSession(captor.capture())).thenReturn(
+            WorkoutSessionResponse.builder().id("workout-002").sets(List.of()).build());
+
+        mockMvc.perform(post("/api/workouts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "workoutDate": "2026-05-26",
+                      "sessionNote": "어깨 컨디션 좋음",
+                      "sets": [
+                        {"exerciseOrder": 1, "exerciseId": "30", "exerciseNameSnapshot": "Barbell Bench Press",
+                         "setIndex": 1, "trackingMode": "weightReps", "weightKg": 70, "reps": 8, "restSec": 120}
+                      ]
+                    }
+                    """))
+            .andExpect(status().isCreated());
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().getSessionNote()).isEqualTo("어깨 컨디션 좋음");
+    }
+
+    @Test
     void createWorkout_invalidNumericFields_returns400WithMessages() throws Exception {
         mockMvc.perform(post("/api/workouts")
                 .contentType(MediaType.APPLICATION_JSON)

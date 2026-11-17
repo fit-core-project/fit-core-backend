@@ -79,6 +79,7 @@ public class WorkoutSessionService {
             .currentPainAreas(request.getCurrentPainAreas())
             .doms(request.getCurrentDoms())
             .unavailableEquipment(request.getUnavailableEquipment())
+            .sessionNote(normalizeNote(request.getSessionNote()))
             .build();
 
         // 2. 세트 엔티티 리스트 변환 및 연관관계 설정
@@ -257,5 +258,11 @@ public class WorkoutSessionService {
                 .build());
         }
         return result;
+    }
+
+    private static String normalizeNote(String note) {
+        if (note == null) return null;
+        String trimmed = note.strip();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }
