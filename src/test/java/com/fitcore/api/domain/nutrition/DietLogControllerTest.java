@@ -22,9 +22,11 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.containsString;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -167,5 +169,21 @@ class DietLogControllerTest {
                                 }
                                 """))
                 .andExpect(status().isBadRequest());
+    }
+
+    // ── POST batch validation ─────────────────────────────────────
+
+    @Test
+    void saveBatch_invalidElement_returns400WithIndex() throws Exception {
+        String body = """
+            [
+              {"logDate":"2026-06-16","foodName":"밥","kcal":300,"source":"manual"},
+              {"logDate":"2026-06-16","foodName":"과장된 항목","kcal":99999,"source":"manual"}
+            ]
+            """;
+
+        mockMvc.perform(post("/api/diet-logs").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(containsString("[1]")));
     }
 }

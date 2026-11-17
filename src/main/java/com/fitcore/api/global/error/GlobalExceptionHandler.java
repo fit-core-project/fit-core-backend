@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import java.util.stream.Collectors;
 
@@ -34,6 +35,27 @@ public class GlobalExceptionHandler {
         log.error("ValidationException: {}", e.getMessage());
         String message = e.getBindingResult().getFieldErrors().stream()
             .map(error -> error.getField() + ": " + error.getDefaultMessage())
+            .distinct()
+            .collect(Collectors.joining(", "));
+        ErrorResponse response = ErrorResponse.of(
+            ErrorCode.INVALID_INPUT_VALUE,
+            message.isBlank() ? ErrorCode.INVALID_INPUT_VALUE.getMessage() : message
+        );
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    // @Valid on List<@Valid T> request bodies (e.g. POST /api/diet-logs) is method validation in
+    // Spring 6.1+: report it as 400 with the element index ("[2] kcal: ...") instead of a 500.
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    protected ResponseEntity<ErrorResponse> handleMethodValidationException(HandlerMethodValidationException e) {
+        log.error("MethodValidationException: {}", e.getMessage());
+        String message = e.getParameterValidationResults().stream()
+            .flatMap(result -> result.getResolvableErrors().stream().map(error -> {
+                String index = result.getContainerIndex() != null ? "[" + result.getContainerIndex() + "] " : "";
+                String field = error instanceof org.springframework.validation.FieldError fieldError
+                    ? fieldError.getField() + ": " : "";
+                return index + field + error.getDefaultMessage();
+            }))
             .distinct()
             .collect(Collectors.joining(", "));
         ErrorResponse response = ErrorResponse.of(
