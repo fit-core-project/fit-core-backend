@@ -64,6 +64,43 @@ class AiControllerFallbackTest {
     }
 
     @Test
+    void forwardsSupplementChatHistoryUnchangedToAi() throws Exception {
+        ControllerFixture fixture = controllerWithMockServer();
+        String longTurn = "마".repeat(500);
+        StringBuilder history = new StringBuilder();
+        for (int i = 0; i < 6; i++) {
+            String role = i % 2 == 0 ? "user" : "assistant";
+            String content = i == 0 ? "마그네슘 먹어도 돼?" : longTurn;
+            if (i > 0) {
+                history.append(',');
+            }
+            history.append("{\"role\":\"").append(role).append("\",\"content\":\"").append(content).append("\"}");
+        }
+        String requestBody = "{\"question\":\"그럼 몇 시에 먹어요?\",\"history\":[" + history + "]}";
+        String aiResponse = """
+            {
+              "answer": "mock answer",
+              "sources": [],
+              "mode": "full"
+            }
+            """;
+
+        fixture.server.expect(once(), requestTo("http://ai.test/api/ai/supplement-chat"))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+            .andExpect(content().json(requestBody, true))
+            .andRespond(withSuccess(aiResponse, MediaType.APPLICATION_JSON));
+
+        var response = fixture.controller.supplementChat(requestBody);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        JsonNode body = objectMapper.readTree(response.getBody());
+        assertThat(body.path("answer").asText()).isEqualTo("mock answer");
+        assertThat(body.path("fallback_reason").isMissingNode()).isTrue();
+        fixture.server.verify();
+    }
+
+    @Test
     void supplementEmptyBodyDoesNotCallAiUpstream() throws Exception {
         ControllerFixture fixture = controllerWithMockServer();
 
