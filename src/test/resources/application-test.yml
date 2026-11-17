@@ -67,3 +67,7 @@ jwt:
 ai:
   server:
     url: http://localhost:9999/api/ai
+
+app:
+  withdrawal-purge:
+    enabled: false
