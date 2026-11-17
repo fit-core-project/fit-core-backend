@@ -11,6 +11,8 @@ import java.time.LocalDate;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 @Getter
 @Setter
@@ -28,11 +30,19 @@ public class BodyComposition {
     @DecimalMin(value = "5.0", message = "skeletalMuscleMassKg must be greater than or equal to 5 kg")
     @DecimalMax(value = "100.0", message = "skeletalMuscleMassKg must be less than or equal to 100 kg")
     private Double skeletalMuscleMassKg;
+    @DecimalMin(value = "0.5", message = "bodyFatMassKg must be greater than or equal to 0.5 kg")
+    @DecimalMax(value = "200.0", message = "bodyFatMassKg must be less than or equal to 200 kg")
     private Double bodyFatMassKg;
     @DecimalMin(value = "1.0", message = "bodyFatPct must be greater than or equal to 1%")
     @DecimalMax(value = "60.0", message = "bodyFatPct must be less than or equal to 60%")
     private Double bodyFatPct;
+    @DecimalMin(value = "10.0", message = "fatFreeMassKg must be greater than or equal to 10 kg")
+    @DecimalMax(value = "250.0", message = "fatFreeMassKg must be less than or equal to 250 kg")
     private Double fatFreeMassKg;
+    @DecimalMin(value = "0.4", message = "waistHipRatio must be greater than or equal to 0.4")
+    @DecimalMax(value = "1.5", message = "waistHipRatio must be less than or equal to 1.5")
     private Double waistHipRatio;
+    @Min(value = 1, message = "visceralFatLevel must be greater than or equal to 1")
+    @Max(value = 30, message = "visceralFatLevel must be less than or equal to 30")
     private Integer visceralFatLevel;
 }

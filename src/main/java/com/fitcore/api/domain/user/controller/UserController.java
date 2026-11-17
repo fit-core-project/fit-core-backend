@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -17,6 +18,8 @@ import com.fitcore.api.domain.user.response.UserConditionResponse;
 import com.fitcore.api.domain.user.response.UserPreferencesResponse;
 import com.fitcore.api.domain.user.response.UserProfileResponse;
 import com.fitcore.api.domain.user.service.UserService;
+import com.fitcore.api.global.common.util.NetworkUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @RequestMapping("/api")
@@ -53,7 +56,13 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    // UserController.java
+    @Operation(summary = "회원 탈퇴", description = "로그인된 유저의 계정을 탈퇴 처리합니다. 개인 정보와 소셜 연동이 삭제됩니다.")
+    @DeleteMapping("/profile/me")
+    public ResponseEntity<Void> withdrawMe(HttpServletRequest request) {
+        userService.withdrawMe(NetworkUtil.getClientIp(request));
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "닉네임 중복 확인")
     @GetMapping("/profile/check-nickname/{nickname}")
     public ResponseEntity<Boolean> checkNicknameDuplicate(@PathVariable String nickname) {

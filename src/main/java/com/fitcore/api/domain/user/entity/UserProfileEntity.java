@@ -179,33 +179,37 @@ public class UserProfileEntity extends BaseDeleteEntity {
         return trainingDaysPerWeek != null ? trainingDaysPerWeek : DEFAULT_TRAINING_DAYS_PER_WEEK;
     }
 
+    /**
+     * 부분 업데이트(merge). 요청에서 null인 필드는 저장된 값을 유지한다.
+     * 리스트/JSON 필드는 null이면 유지, 빈 리스트면 비운다.
+     * 스칼라 필드(birthDate 등)는 이 API로 null로 되돌릴 수 없다.
+     */
     public void updateProfile(UserProfileUpdateRequest request) {
-        // 1. 기본 정보 업데이트
-        this.nickname = request.getNickname();
-        this.gender = request.getGender();
-        this.birthDate = request.getBirthDate();
-        this.notes = request.getNotes();
+        // 1. 기본 정보
+        if (request.getNickname() != null) this.nickname = request.getNickname();
+        if (request.getGender() != null) this.gender = request.getGender();
+        if (request.getBirthDate() != null) this.birthDate = request.getBirthDate();
+        if (request.getNotes() != null) this.notes = request.getNotes();
 
-        // 2. 피트니스 정보 업데이트
-        this.goalType = request.getGoalType();
-        this.splitType = request.getSplitType();
-        this.experienceLevel = request.getExperienceLevel();
-        this.trainingDaysPerWeek = request.getTrainingDaysPerWeek();
-        this.splitLabel = request.getSplitLabel();
-        this.bodyWeightKg = request.getBodyWeightKg();
-        this.bodyFatPct = request.getBodyFatPct();
+        // 2. 피트니스 정보
+        if (request.getGoalType() != null) this.goalType = request.getGoalType();
+        if (request.getSplitType() != null) this.splitType = request.getSplitType();
+        if (request.getExperienceLevel() != null) this.experienceLevel = request.getExperienceLevel();
+        if (request.getTrainingDaysPerWeek() != null) this.trainingDaysPerWeek = request.getTrainingDaysPerWeek();
+        if (request.getSplitLabel() != null) this.splitLabel = request.getSplitLabel();
+        if (request.getBodyWeightKg() != null) this.bodyWeightKg = request.getBodyWeightKg();
+        if (request.getBodyFatPct() != null) this.bodyFatPct = request.getBodyFatPct();
 
-        // 3. JSON 타입 데이터 업데이트 (Hibernate가 자동으로 처리)
-        this.availableDays = request.getAvailableDays();
-        this.equipmentAccess = request.getEquipmentAccess();
-        this.unpreferredExerciseIds = request.getUnpreferredExerciseIds();
-        this.preferredExerciseIds = request.getPreferredExerciseIds();
-        this.painAreas = request.getPainAreas();
-        this.strengthBaseline = request.getStrengthBaseline();
-        this.bodyCompositionSnapshot = request.getBodyCompositionSnapshot();
+        // 3. JSON 필드: null = 유지, [] = 비우기
+        if (request.getAvailableDays() != null) this.availableDays = request.getAvailableDays();
+        if (request.getEquipmentAccess() != null) this.equipmentAccess = request.getEquipmentAccess();
+        if (request.getUnpreferredExerciseIds() != null) this.unpreferredExerciseIds = request.getUnpreferredExerciseIds();
+        if (request.getPreferredExerciseIds() != null) this.preferredExerciseIds = request.getPreferredExerciseIds();
+        if (request.getPainAreas() != null) this.painAreas = request.getPainAreas();
+        if (request.getStrengthBaseline() != null) this.strengthBaseline = request.getStrengthBaseline();
+        if (request.getBodyCompositionSnapshot() != null) this.bodyCompositionSnapshot = request.getBodyCompositionSnapshot();
 
-        // 필요 시 버전 업데이트 (선택 사항)
-        this.profileVersion += 1;
+        this.profileVersion = (this.profileVersion == null ? 1 : this.profileVersion) + 1;
     }
 
     public void updateDoms(List<Doms> newDoms) {
@@ -217,5 +221,23 @@ public class UserProfileEntity extends BaseDeleteEntity {
      */
     public void withdraw(String ip) {
         this.markAsDeleted(ip);
+        // 이메일은 unique 제약이 있어 같은 소셜 계정으로 재가입할 수 있도록 익명화한다.
+        this.email = "withdrawn+" + this.userId + "@withdrawn.fitcore.invalid";
+        this.name = null;
+        this.nickname = null;
+        this.profileImageUrl = null;
+        this.gender = null;
+        this.birthDate = null;
+        this.notes = null;
+        this.bodyWeightKg = null;
+        this.bodyFatPct = null;
+        this.availableDays = null;
+        this.equipmentAccess = null;
+        this.unpreferredExerciseIds = null;
+        this.preferredExerciseIds = null;
+        this.painAreas = null;
+        this.doms = null;
+        this.strengthBaseline = null;
+        this.bodyCompositionSnapshot = null;
     }
 }

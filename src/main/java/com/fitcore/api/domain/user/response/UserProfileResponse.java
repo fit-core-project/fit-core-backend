@@ -89,7 +89,7 @@ public class UserProfileResponse {
         this.bodyCompositionSnapshot = (source == null || source.isEmpty())
             ? null
             : source.stream()
-              .sorted(Comparator.comparing(BodyComposition::getMeasuredAt).reversed())
+              .sorted(Comparator.comparing(BodyComposition::getMeasuredAt, Comparator.nullsFirst(Comparator.<LocalDate>naturalOrder())).reversed())
               .collect(Collectors.toList());
     }
 }

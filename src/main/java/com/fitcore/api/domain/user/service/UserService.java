@@ -68,6 +68,21 @@ public class UserService {
         return getMyProfile();
     }
 
+    /**
+     * 회원 탈퇴: 개인 정보를 비우고 소셜 연동을 끊은 뒤 소프트 삭제한다.
+     */
+    public void withdrawMe(String clientIp) {
+        String userId = securityUtils.getCurrentUserId();
+        UserProfileEntity user = userRepository.findById(userId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        socialAccountRepository.deleteAll(socialAccountRepository.findByUserUserId(userId));
+        user.withdraw(clientIp);
+        // @SoftDelete: delete()가 is_deleted를 세운다. 익명화한 값이 먼저 반영되도록 flush 후 삭제한다.
+        userRepository.saveAndFlush(user);
+        userRepository.delete(user);
+    }
+
     public boolean checkNicknameDuplicate(String nickname) {
         return userRepository.existsByNickname(nickname);
     }

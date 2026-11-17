@@ -15,6 +15,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -132,5 +135,13 @@ class UserProfileControllerTest {
 
         mockMvc.perform(get("/api/profile/me"))
             .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void withdrawMe_returns204AndCallsService() throws Exception {
+        mockMvc.perform(delete("/api/profile/me"))
+            .andExpect(status().isNoContent());
+
+        verify(userService).withdrawMe(anyString());
     }
 }
